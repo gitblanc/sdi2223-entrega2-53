@@ -48,10 +48,23 @@ const url = 'mongodb://localhost:27017';
 app.set('connectionStrings', url);
 
 
+//_____________REPOSITORIES___________________
+const usersRepository = require("./repositories/usersRepository.js");
+usersRepository.init(app, MongoClient);
+//__________________________________________
+
+
 // _________ ROUTERS _____________
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+var offersRouter = require('./routes/offers');
 // _______________________________
+
+
+require("./routes/users.js")(app, usersRepository);
+require("./routes/offers.js")(app);
+
+
 
 
 // view engine setup
