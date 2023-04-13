@@ -1,0 +1,6 @@
+.idea
+package-lock.json
+node_modules
+
+mywallapop/node_modules
+mywallapop/package-lock.json
