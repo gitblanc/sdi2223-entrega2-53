@@ -1,3 +1,4 @@
+const {ObjectId} = require("mongodb");
 module.exports = function (app, usersRepository) {
     app.get('/users', function (req, res) {
         res.send('lista de usuarios');
@@ -44,7 +45,32 @@ module.exports = function (app, usersRepository) {
         res.send("El usuario se ha desconectado correctamente");
     })
     app.get("/users/list", function (req, res) {
-        res.render("users/userslist.twig");
+        let filter = {email: {$ne:'admin@email.com'}};
+        let options={};
+        let page = parseInt(req.query.page); // Es String !!!
+        if (typeof req.query.page === "undefined" || req.query.page === null || req.query.page === "0") { //Puede no venir el param
+            page = 1;
+        }
+        usersRepository.getUsers(filter, options, page).then(result => {
+            let lastPage = result.total / 4;
+            if (result.total % 4 > 0) { // Sobran decimales
+                lastPage = lastPage + 1;
+            }
+            let pages = []; // paginas mostrar
+            for (let i = page - 2; i <= page + 2; i++) {
+                if (i > 0 && i <= lastPage) {
+                    pages.push(i);
+                }
+            }
+            let response = {
+                users: result.users,
+                pages: pages,
+                currentPage: page
+            }
+            res.render("users/userslist.twig", response);
+        }).catch(error => {
+            res.send("Se ha producido un error al listar los usuarios " + error)
+        });
     });
     app.get('/users/signup', function (req, res) {
         res.render("signup.twig");
@@ -100,6 +126,42 @@ module.exports = function (app, usersRepository) {
                 "&messageType=alert-danger ");
         })
     });
+    app.post('/users/delete', function (req, res) {
+        let usersToDelete = req.body.check;
+        if(typeof usersToDelete === 'undefined'){
+            res.redirect("/users/list");
+        }else if(!Array.isArray(usersToDelete)){
+            usersToDelete = usersToDelete.substring(0, usersToDelete.length - 1);
+            let filter = {email : usersToDelete};
+
+            usersRepository.deleteUser(filter, {}).then(result => {
+                if (result === null || result.deletedCount === 0) {
+                    res.send("No se ha podido eliminar el usuario");
+                    return null;
+                }else{
+                    res.redirect("/users/list");
+                }
+            }).catch(error => {
+                res.send("Se ha producido un error al intentar eliminar el usuario: " + error)
+            });
+        }else{
+            for (let i = 0; i < usersToDelete.length; i++) {
+                usersToDelete[i] = usersToDelete[i].substring(0, usersToDelete[i].length - 1);
+            }
+            let filter = {email : {$in:usersToDelete}};
+
+            usersRepository.deleteUsers(filter, {}).then(result => {
+                if (result === null || result.deletedCount === 0) {
+                    res.send("No se han podido eliminar los usuarios");
+                    return null;
+                }else{
+                    res.redirect("/users/list");
+                }
+            }).catch(error => {
+                res.send("Se ha producido un error al intentar eliminar los usuarios: " + error)
+            });
+        }
+    })
 
 
     /**
