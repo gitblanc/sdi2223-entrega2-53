@@ -51,7 +51,13 @@ app.set('connectionStrings', url);
 //_____________REPOSITORIES___________________
 const usersRepository = require("./repositories/usersRepository.js");
 usersRepository.init(app, MongoClient);
-//__________________________________________
+const userSessionRouter = require('./routes/userSessionRouter');
+//_________________________________________
+
+// _________ USER_SESSION_CHECK _____________
+app.use("/users/list", userSessionRouter);
+// _________________________________________
+
 
 
 // _________ ROUTERS _____________
