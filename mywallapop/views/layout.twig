@@ -22,8 +22,7 @@
       </button>
       <img src="/images/logo.png" alt="logo"/>
     </div>
-      <p>{{email}}</p>
-      <p>{{amount}}</p>
+
 
     <div class="collapse navbar-collapse" id="myNavbar">
       <ul class="nav navbar-nav">
@@ -32,8 +31,16 @@
         <li id="mybuy"><a href="/purchases">Compras</a></li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
-        <li><a href="/users/signup"><span class="glyphicon glyphicon-user"></span> Registrate</a></li>
-        <li><a href="/users/login"><span class="glyphicon glyphicon-log-in"></span> Identifícate</a></li>
+
+        {% if email != null %}
+          <li style="color:white ; padding:1em">{{email}}</li>
+          <li style="color:white ; padding:1em">{{amount}} €</li>
+          <li><a href="/users/logout"><span class="glyphicon glyphicon-user"></span> Desconectarse</a></li>
+        {% else %}
+          <li><a href="/users/signup"><span class="glyphicon glyphicon-user"></span> Registrate</a></li>
+          <li><a href="/users/login"><span class="glyphicon glyphicon-log-in"></span> Identifícate</a></li>
+        {% endif %}
+
       </ul>
     </div>
   </div>

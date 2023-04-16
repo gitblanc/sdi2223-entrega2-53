@@ -19,16 +19,19 @@
 {#    </div>#}
     <h2>Usuarios</h2>
     <form id = "new-item-form" action = "/users/delete" method = "POST">
-
-        {% for user in users %}
-                <div style="width:200px; padding-bottom:2em">
-                    <input type = "checkbox" name = "check" value = {{ user.email }}/>
-                    <p>Email: {{ user.email }} </p>
-                    <p>Name: {{ user.name }} </p>
-                    <p>Surname: {{ user.surname }}</p>
-                </div>
-        {% endfor %}
-        <button type="submit"> Borrar Usuarios </button>
+        {% if users.length != 0 %}
+            {% for user in users %}
+                    <div style="width:200px; padding-bottom:2em">
+                        <input type = "checkbox" name = "check" value = {{ user.email }}/>
+                        <p>Email: {{ user.email }} </p>
+                        <p>Name: {{ user.name }} </p>
+                        <p>Surname: {{ user.surname }}</p>
+                    </div>
+            {% endfor %}
+            <button type="submit"> Borrar Usuarios </button>
+        {% else %}
+            <p>Lista de usuarios vacía</p>
+        {% endif %}
     </form>
     <!-- Paginación mostrar la actual y 2 anteriores y dos siguientes -->
     <div class="row text-center">
