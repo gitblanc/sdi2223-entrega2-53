@@ -24,11 +24,11 @@ module.exports = function (app, usersRepository) {
 
                 if(user.role === 'Administrador'){
                     req.session.user = user.email;
-                    res.locals.user = req.session.user;
+                    req.session.userAmount = user.amount;
                     res.redirect("/users/list");
                 }else{
                     req.session.user = user.email;
-                    res.locals.user = req.session.user;
+                    req.session.userAmount = user.amount;
                     res.redirect("/offers/list");
                 }
 
@@ -42,7 +42,8 @@ module.exports = function (app, usersRepository) {
     })
     app.get('/users/logout', function (req, res) {
         req.session.user = null;
-        res.send("El usuario se ha desconectado correctamente");
+        req.session.amount = null;
+        res.render("login.twig");
     })
     app.get("/users/list", function (req, res) {
         let filter = {email: {$ne:'admin@email.com'}};
@@ -63,6 +64,8 @@ module.exports = function (app, usersRepository) {
                 }
             }
             let response = {
+                email:req.session.user,
+                amount:req.session.userAmount,
                 users: result.users,
                 pages: pages,
                 currentPage: page
@@ -111,6 +114,7 @@ module.exports = function (app, usersRepository) {
             } else {
                 usersRepository.insertUser(userToSave).then(userId => {
                      req.session.user = userToSave.email;
+                     req.session.userAmount = userToSave.amount;
                      res.redirect("/offers/list");
 
                 }).catch(error => {
@@ -133,33 +137,41 @@ module.exports = function (app, usersRepository) {
         }else if(!Array.isArray(usersToDelete)){
             usersToDelete = usersToDelete.substring(0, usersToDelete.length - 1);
             let filter = {email : usersToDelete};
+            if(usersToDelete != 'admin@email.com'){
+                usersRepository.deleteUser(filter, {}).then(result => {
+                    if (result === null || result.deletedCount === 0) {
+                        res.send("No se ha podido eliminar el usuario");
+                        return null;
+                    }else{
+                        res.redirect("/users/list");
+                    }
+                }).catch(error => {
+                    res.send("Se ha producido un error al intentar eliminar el usuario: " + error)
+                });
+            }else{
+                res.send("No es posible borrar el usuario administrador");
+            }
 
-            usersRepository.deleteUser(filter, {}).then(result => {
-                if (result === null || result.deletedCount === 0) {
-                    res.send("No se ha podido eliminar el usuario");
-                    return null;
-                }else{
-                    res.redirect("/users/list");
-                }
-            }).catch(error => {
-                res.send("Se ha producido un error al intentar eliminar el usuario: " + error)
-            });
         }else{
             for (let i = 0; i < usersToDelete.length; i++) {
                 usersToDelete[i] = usersToDelete[i].substring(0, usersToDelete[i].length - 1);
             }
             let filter = {email : {$in:usersToDelete}};
 
-            usersRepository.deleteUsers(filter, {}).then(result => {
-                if (result === null || result.deletedCount === 0) {
-                    res.send("No se han podido eliminar los usuarios");
-                    return null;
-                }else{
-                    res.redirect("/users/list");
-                }
-            }).catch(error => {
-                res.send("Se ha producido un error al intentar eliminar los usuarios: " + error)
-            });
+            if(!usersToDelete.includes('admin@wmail.com')){
+                usersRepository.deleteUsers(filter, {}).then(result => {
+                    if (result === null || result.deletedCount === 0) {
+                        res.send("No se han podido eliminar los usuarios");
+                        return null;
+                    }else{
+                        res.redirect("/users/list");
+                    }
+                }).catch(error => {
+                    res.send("Se ha producido un error al intentar eliminar los usuarios: " + error)
+                });
+            }else{
+                res.send("No es posible borrar el usuario administrador");
+            }
         }
     })
 
