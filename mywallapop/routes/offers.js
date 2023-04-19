@@ -16,9 +16,9 @@ module.exports = function (app, offersRepository, usersRepository) {
                 page = 1;
 
             // obtiene las ofertas
-            offersRepository.getOffers(filter, {}).then(result => {
-                let lastPage = result.total / numItemsPorPagina;
-                if (result.total % numItemsPorPagina > 0) {
+            offersRepository.getOffers(filter, {}, page).then(result => {
+                let lastPage = result.total / 4;
+                if (result.total % 4 > 0) {
                     lastPage = lastPage + 1;
                 }
                 let pages = [];
@@ -34,7 +34,6 @@ module.exports = function (app, offersRepository, usersRepository) {
                     offers: result.offers,
                     pages: pages,
                     currentPage: page,
-                    itemsPerPage: numItemsPorPagina
                 }
                 res.render("offers/myOffersList.twig", response);
             }).catch(error => {
@@ -122,6 +121,10 @@ module.exports = function (app, offersRepository, usersRepository) {
         }
     });
 
+    /**
+     * Responde a la petición GET para eliminar una canción según el ID
+     * especificado en la URL
+     */
     app.get("/offers/delete/:id", function(req, res){
         let filter = {_id: ObjectId(req.params.id)};
         offersRepository.findOffer(filter, {}).then( offer => {
@@ -139,8 +142,17 @@ module.exports = function (app, offersRepository, usersRepository) {
                                 "?message=Se ha producido un error al borrar la oferta." +
                                 "&messageType=alert-danger ");
                         });
+                    }else{
+                        res.redirect("/publications" +
+                            "?message=Acceso denegado." +
+                            "&messageType=alert-danger ");
                     }
                 });
+            else{
+                res.redirect("/publications" +
+                    "?message=Ya se ha vendido." +
+                    "&messageType=alert-danger ");
+            }
         }).catch(error => {
             res.redirect("/publications" +
                 "?message=Se ha producido un error al recuperar la oferta." +
@@ -150,10 +162,20 @@ module.exports = function (app, offersRepository, usersRepository) {
 
     // ___________________________________________________________________
 
+    /**
+     * Devuelve true si el valor especificado no es válido (está vacío o es null)
+     * @param value
+     * @returns {boolean}
+     */
     function checkEmpty(value){
         return value === "undefined" || value === null || value.toString().trim().length === 0;
     }
 
+    /**
+     * Devuelve true si el precio no es válido (no es un número o es negativo)
+     * @param value
+     * @returns {boolean}
+     */
     function checkInvalidPrice(value){
         if(isNaN(value) || value.toString().trim().length === 0)
             return true;

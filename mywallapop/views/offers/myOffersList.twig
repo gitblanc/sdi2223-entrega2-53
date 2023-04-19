@@ -10,27 +10,28 @@
         <tr>
             <th scope="col">Título</th>
             <th scope="col">Detalles</th>
+            <th scope="col">Fecha de publicación</th>
             <th scope="col">Precio</th>
             <th scope="col">Estado</th>
             <th scope="col"></th>
         </tr>
         </thead>
         <tbody>
-        {% set start = (currentPage - 1) * itemsPerPage %}
-        {% for offer in offers|slice(start, itemsPerPage) %}
-        <tr>
-            <td>{{ offer.title }}</td>
-            <td>{{ offer.description }}</td>
-            <td>{{ offer.price }} €</td>
-            {% if offer.sold %}
-                <td>Vendida</td>
-            {% else %}
-                <td>En venta</td>
-            {% endif %}
-            <td>
-                <a href="/offers/delete/{{ offer._id }}">Eliminar</a>
-            </td>
-        </tr>
+        {% for offer in offers %}
+            <tr>
+                <td>{{ offer.title }}</td>
+                <td>{{ offer.description }}</td>
+                <td>{{ offer.date }}</td>
+                <td>{{ offer.price }} €</td>
+                {% if offer.sold %}
+                    <td>Vendida</td>
+                {% else %}
+                    <td>En venta</td>
+                {% endif %}
+                <td>
+                    <a href="/offers/delete/{{ offer._id }}">Eliminar</a>
+                </td>
+            </tr>
         {% endfor %}
         </tbody>
     </table>
