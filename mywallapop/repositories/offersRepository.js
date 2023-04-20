@@ -6,6 +6,24 @@ module.exports = {
         this.app = app;
     },
 
+    /**
+     * Devuelve una lista de compras de la base de datos en base al filtro pasado como parámetro
+     * @param filter filtro
+     * @param options opciones
+     * @returns {Promise<*>} lista de compras
+     */
+    getPurchases: async function (filter, options) {
+        try {
+            const client = await this.mongoClient.connect(this.app.get('connectionStrings'));
+            const database = client.db("myWallapop");
+            const collectionName = 'purchases';
+            const purchasesCollection = database.collection(collectionName);
+            return await purchasesCollection.find(filter, options).toArray();
+        } catch (error) {
+            throw (error);
+        }
+    },
+
     findOffer: async function (filter, options) {
         try {
             const client = await this.mongoClient.connect(this.app.get('connectionStrings'));
