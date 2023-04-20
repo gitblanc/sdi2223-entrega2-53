@@ -29,7 +29,7 @@ module.exports = function (app, usersRepository) {
                 }else{
                     req.session.user = user.email;
                     req.session.userAmount = user.amount;
-                    res.redirect("/offers/list");
+                    res.redirect("/publications");
                 }
 
             }
