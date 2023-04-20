@@ -14,11 +14,28 @@ module.exports = function (app, offersRepository, usersRepository) {
             }
             let filter = {"_id": {$in: purchasedOffersIds}};
             let options = {sort: {title: 1}};
-            offersRepository.getOffers(filter, options).then(purchasedOffers => {
+
+            let page = parseInt(req.query.page);
+            if (typeof req.query.page === "undefined" || req.query.page === null || req.query.page === 0)
+                page = 1;
+
+            offersRepository.getOffers(filter, options, page).then(purchasedOffers => {
+                let lastPage = purchasedOffers.total / 4;
+                if (purchasedOffers.total % 4 > 0) {
+                    lastPage = lastPage + 1;
+                }
+                let pages = [];
+                for (let i = page - 2; i <= page + 2; i++) {
+                    if (i > 0 && i <= lastPage) {
+                        pages.push(i);
+                    }
+                }
                 let response = {
                     email:req.session.user,
                     amount:req.session.userAmount,
-                    offers: purchasedOffers.offers
+                    offers: purchasedOffers.offers,
+                    pages: pages,
+                    currentPage: page
                 }
                 res.render("purchase.twig", response);
             }).catch(error => {
