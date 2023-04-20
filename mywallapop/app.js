@@ -50,7 +50,9 @@ app.set('connectionStrings', url);
 
 //_____________REPOSITORIES___________________
 const usersRepository = require("./repositories/usersRepository.js");
+const offersRepository = require("./repositories/offersRepository.js");
 usersRepository.init(app, MongoClient);
+offersRepository.init(app, MongoClient);
 const userSessionRouter = require('./routes/userSessionRouter');
 //_________________________________________
 
@@ -69,7 +71,7 @@ var offersRouter = require('./routes/offers');
 
 
 require("./routes/users.js")(app, usersRepository);
-require("./routes/offers.js")(app);
+require("./routes/offers.js")(app, offersRepository, usersRepository);
 
 
 
