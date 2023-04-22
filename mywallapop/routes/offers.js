@@ -1,4 +1,6 @@
 const {ObjectId} = require("mongodb");
+const logsRepository = require("../repositories/logsRepository");
+const appLogger = require("../logger");
 module.exports = function (app, offersRepository, usersRepository) {
 
     /**

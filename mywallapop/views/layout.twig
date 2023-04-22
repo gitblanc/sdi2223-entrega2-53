@@ -26,9 +26,11 @@
 
     <div class="collapse navbar-collapse" id="myNavbar">
       <ul class="nav navbar-nav">
-        <li id="myshop" class="active"><a href="/shop">Tienda</a></li>
         <li id="mypublication"><a href="/publications">Publicaciones</a></li>
         <li id="mybuy"><a href="/purchases">Compras</a></li>
+        {% if email == "admin@admin.com" %}
+          <li id="logs"><a href="/users/logs">Logs</a></li>
+        {% endif %}
       </ul>
       <ul class="nav navbar-nav navbar-right">
 
