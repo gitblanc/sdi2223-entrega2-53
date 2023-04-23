@@ -11,25 +11,25 @@ let rest = require('request');
 app.set('rest', rest);
 
 app.use(function (req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Credentials", "true");
-  res.header("Access-Control-Allow-Methods", "POST, GET, DELETE, UPDATE, PUT");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, token");
-  // Debemos especificar todas las headers que se aceptan. Content-Type , token
-  next();
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header("Access-Control-Allow-Methods", "POST, GET, DELETE, UPDATE, PUT");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, token");
+    // Debemos especificar todas las headers que se aceptan. Content-Type , token
+    next();
 });
 
 let expressSession = require('express-session');
 app.use(expressSession({
-  secret: 'abcdefg',
-  resave: true,
-  saveUninitialized: true
+    secret: 'abcdefg',
+    resave: true,
+    saveUninitialized: true
 }));
 
 let fileUpload = require('express-fileupload');
 app.use(fileUpload({
-  limits: {fileSize: 50 * 1024 * 1024},
-  createParentPath: true
+    limits: {fileSize: 50 * 1024 * 1024},
+    createParentPath: true
 }));
 app.set("uploadPath", __dirname);
 
@@ -55,6 +55,9 @@ const offersRepository = require("./repositories/offersRepository.js");
 usersRepository.init(app, MongoClient);
 offersRepository.init(app, MongoClient);
 const userSessionRouter = require('./routes/userSessionRouter');
+//logs
+const logsRepository = require('./repositories/logsRepository');
+logsRepository.init(app, MongoClient)
 //_________________________________________
 
 // _________ USER_SESSION_CHECK _____________
@@ -66,18 +69,18 @@ app.use("/shop/",userSessionRouter);
 // _________________________________________
 
 
-
 // _________ ROUTERS _____________
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var offersRouter = require('./routes/offers');
 // _______________________________
 
+//LOGGER
+const appLogger = require('./logger');
 
-require("./routes/users.js")(app, usersRepository);
-require("./routes/offers.js")(app, offersRepository, usersRepository);
-
-
+//ROUTES
+require("./routes/users.js")(app, usersRepository, appLogger);
+require("./routes/offers.js")(app, offersRepository, usersRepository, appLogger);
 
 
 // view engine setup
@@ -86,7 +89,7 @@ app.set('view engine', 'twig');
 
 app.use(logger('dev'));
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({extended: false}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -94,19 +97,19 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  next(createError(404));
+app.use(function (req, res, next) {
+    next(createError(404));
 });
 
 // error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+app.use(function (err, req, res, next) {
+    // set locals, only providing error in development
+    res.locals.message = err.message;
+    res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
+    // render the error page
+    res.status(err.status || 500);
+    res.render('error');
 });
 
 module.exports = app;
