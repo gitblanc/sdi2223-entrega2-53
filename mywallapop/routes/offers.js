@@ -82,7 +82,7 @@ module.exports = function (app, offersRepository, usersRepository) {
             if (typeof req.query.page === "undefined" || req.query.page === null || req.query.page === 0)
                 page = 1;
 
-            offersRepository.getOffersPg(filter, options, page).then(purchasedOffers => {
+            offersRepository.getOffersPg(filter, options, page,4).then(purchasedOffers => {
                 let lastPage = purchasedOffers.total / 4;
                 if (purchasedOffers.total % 4 > 0) {
                     lastPage = lastPage + 1;
@@ -122,7 +122,7 @@ module.exports = function (app, offersRepository, usersRepository) {
             page = 1;
 
         // obtiene las ofertas
-        offersRepository.getOffersPg(filter, {}, page).then(result => {
+        offersRepository.getOffersPg(filter, {}, page,4).then(result => {
             let lastPage = result.total / 4;
             if (result.total % 4 > 0) {
                 lastPage = lastPage + 1;
@@ -147,17 +147,7 @@ module.exports = function (app, offersRepository, usersRepository) {
         });
     });
 
-    /**
-     * Responde a la petición GET para ver las ofertas disponibles
-     * para comprar
-     */
-    app.get("/offers/list", function (req, res) {
-        let response = {
-            email:req.session.user,
-            amount:req.session.userAmount
-        }
-        res.render("offers/offerslist.twig",response);
-    });
+
 
     /**
      * Responde a la petición GET para publicar una nueva oferta
@@ -286,7 +276,7 @@ module.exports = function (app, offersRepository, usersRepository) {
             //Puede no venir el param
             page = 1;
         }
-        offersRepository.getOffersPg(filter, options, page).then(result => {
+        offersRepository.getOffersPg(filter, options, page,5).then(result => {
             let lastPage = result.total / 4;
             if (result.total % 4 > 0) { // Sobran decimales
                 lastPage = lastPage + 1;
