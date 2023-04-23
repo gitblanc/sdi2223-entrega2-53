@@ -316,57 +316,39 @@ module.exports = function (app, offersRepository, usersRepository) {
             offerId: offerId
         }
 
-        userCanBuySong(shop.user, offerId, function(CanBuy) {
-            if(CanBuy) {
+        let filter = {_id: ObjectId(req.params.id)};
+        let filter2 = {user: req.session.user, offerId: ObjectId(req.params.id)};
+        let options = {projection: {_id: 0, songId: 1}};
+
+        offersRepository.findOffer((filter, {}).then(offer => {
+            offersRepository.getPurchases(filter2, options).then(purchases => {
+                let seller = req.session.user && offer.seller == req.session.user;
+                let canAfford = req.session.user && offer.amount >= req.session.user.amount;
+                let isPurchased = false;
+                for(let i = 0; i < purchases.length; i++) {
+                    if((ObjectId(req.params.id)).equals(purchases[i].offerId)) {
+                        isPurchased = true;
+                    }
+                }
                 offersRepository.buyOffer(shop, function (shopId) {
-                    if (shopId == null) {
-                        res.send("Error al realizar la compra de la oferta");
+                    if(shopId == null) {
+                        res.send("Error al realizar la compra");
+                    } else if(seller) {
+                        res.send("Error al realizar la compra, eres el vendedor de la oferta");
+                    } else if (isPurchased) {
+                        res.send("Error al realizar la compra, ya ha comprado esta oferta");
+                    } else if(canAfford) {
+                        res.send("Error al realizar la compra, no tiene dinero suficiente");
                     } else {
                         res.redirect("/purchases");
                     }
                 })
-                //Hay que decrementar el dinero y marcar como vendido la oferta
-                let offer = {
-                    buyer: req.session.user,
-                    sold: true
-                }
-            } else {
-                res.send("Error comprar la oferta.");
-            }
+            })
+        })).catch(error => {
+            res.send("Se ha producido un error al buscar la canción " + error)
         });
     });
 
-    /**
-     * Función que mira si la oferta se podría comprar
-     * @param user
-     * @param offerId
-     * @param callBackFunc
-     */
-    function userCanBuySong(user, offerId, callBackFunc) {
-        let filterOfferAuthor = {$and: [{"_id": offerId}, {"author": user}]}
-        let filterBougthOffer= {$and: [{"offerId": offerId}, {"user": user}]}
-        let options = {}
-        offersRepository.getOffers(filterOfferAuthor, options).then(songs => {
-
-            if (songs === null || songs.length > 0) {
-                callBackFunc(false)
-            } else {
-                offersRepository.getPurchases(filterBougthOffer, options).then(purchasedIds => {
-                    if (purchasedIds === null || purchasedIds.length > 0) {
-                        callBackFunc(false)
-                    } else {
-                        callBackFunc(true)
-                    }
-                }).catch(err => {
-                        callBackFunc(false)
-                    }
-                );
-            }
-        }).catch(err => {
-                callBackFunc(false)
-            }
-        )
-    }
 
     // ___________________________________________________________________
 
