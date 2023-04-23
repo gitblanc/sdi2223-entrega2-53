@@ -3,6 +3,67 @@ const logsRepository = require("../repositories/logsRepository");
 const appLogger = require("../logger");
 module.exports = function (app, offersRepository, usersRepository) {
 
+    app.get('/publications/highlight/:id', function (req, res) {
+        checkAmount20OrAbove(req, res, user => {
+            checkOwnOfferAndNotHighlight(req, req, user, user => {
+                remove20FromUserAmount(req, res, user, () => {
+                    // Destacar oferta
+                    let newOffer = {highlight: true};
+                    let filter = {_id: ObjectId(req.params.id)};
+                    let options = {upsert: false};
+                    offersRepository.updateOffer(newOffer, filter, options).then(() => {
+                        res.redirect("/publications");
+                    }).catch(error => {
+                        res.send("Error al actualizar la oferta " + error);
+                    });
+                });
+            });
+        });
+    });
+
+    function remove20FromUserAmount(req, res, user, callBackFunc) {
+        let newUser = {amount: user.amount - 20};
+        let filter = {_id: user._id};
+        // que no se cree un documento nuevo, si no existe
+        let options = {upsert: false};
+        usersRepository.updateUser(newUser, filter, options).then(() => {
+            req.session.userAmount = newUser.amount;
+            callBackFunc();
+        }).catch(error => {
+            res.send("Error al actualizar el usuario " + error);
+        })
+    }
+
+    function checkOwnOfferAndNotHighlight(req, res, user, callBackFunc) {
+        let filter = {_id: ObjectId(req.params.id)};
+        let options = {};
+        offersRepository.findOffer(filter, options).then(offer => {
+            if (offer.seller !== req.session.user) {
+                res.send("No eres el propietario");
+            } else if (offer.highlight === true) {
+                res.send("La oferta ya está destacada");
+            } else {
+                callBackFunc(user);
+            }
+        }).catch(error => {
+            res.send("Error al buscar la oferta " + error);
+        })
+    }
+
+    function checkAmount20OrAbove(req, res, callBackFunc) {
+        let filter = {email: req.session.user};
+        let options = {};
+        usersRepository.findUser(filter, options).then(user => {
+            if (user.amount < 20) {
+                res.send("No tienes al menos 20 euros");
+            } else {
+                callBackFunc(user);
+            }
+        }).catch(error => {
+            res.send("Error al buscar al usuario " + error);
+        });
+    }
+
     /**
      * Responde la petición GET para ver las ofertas compradas por el usuario logeado
      */
@@ -21,7 +82,7 @@ module.exports = function (app, offersRepository, usersRepository) {
             if (typeof req.query.page === "undefined" || req.query.page === null || req.query.page === 0)
                 page = 1;
 
-            offersRepository.getOffers(filter, options, page).then(purchasedOffers => {
+            offersRepository.getOffersPg(filter, options, page).then(purchasedOffers => {
                 let lastPage = purchasedOffers.total / 4;
                 if (purchasedOffers.total % 4 > 0) {
                     lastPage = lastPage + 1;
@@ -61,7 +122,7 @@ module.exports = function (app, offersRepository, usersRepository) {
             page = 1;
 
         // obtiene las ofertas
-        offersRepository.getOffers(filter, {}, page).then(result => {
+        offersRepository.getOffersPg(filter, {}, page).then(result => {
             let lastPage = result.total / 4;
             if (result.total % 4 > 0) {
                 lastPage = lastPage + 1;
@@ -127,7 +188,6 @@ module.exports = function (app, offersRepository, usersRepository) {
             res.redirect("/offers/add" +
                 "?message=Se ha producido un error al añadir la oferta, precio no válido" +
                 "&messageType=alert-danger ");
-
         else {
             let offer = {
                 title: req.body.title,
@@ -139,18 +199,36 @@ module.exports = function (app, offersRepository, usersRepository) {
                 sold: false
             }
 
-            // inserta la oferta
-            offersRepository.insertOffer(offer).then(offerId => {
-                let response = {
-                    email:req.session.user,
-                    amount:req.session.userAmount
-                }
-                res.redirect("/publications");
-            }).catch(error => {
+            // si se marca como destacada, comprueba que el saldo sea al menos 20 euros
+            if (req.body.highlight && req.session.userAmount < 20) {
                 res.redirect("/offers/add" +
-                    "?message=Se ha producido un error al publicar la oferta." +
+                    "?message=Se ha producido un error al añadir la oferta, insuficiente saldo para destacar oferta " +
                     "&messageType=alert-danger ");
-            });
+            } else {
+                offer.highlight = !!req.body.highlight;
+                // inserta la oferta
+                offersRepository.insertOffer(offer).then(offerId => {
+                    // si se marca como destacada, reduce el saldo en 20 euros
+                    if (req.body.highlight) {
+                        let newUser = {amount: req.session.userAmount - 20};
+                        let filter = {email: req.session.user};
+                        // que no se cree un documento nuevo, si no existe
+                        let options = {upsert: false};
+                        usersRepository.updateUser(newUser, filter, options).then(() => {
+                            req.session.userAmount = newUser.amount;
+                            res.redirect("/publications");
+                        }).catch(error => {
+                            res.send("Error al actualizar el usuario " + error);
+                        });
+                    } else {
+                        res.redirect("/publications");
+                    }
+                }).catch(error => {
+                    res.redirect("/offers/add" +
+                        "?message=Se ha producido un error al publicar la oferta." +
+                        "&messageType=alert-danger ");
+                });
+            }
         }
     });
 
@@ -208,7 +286,7 @@ module.exports = function (app, offersRepository, usersRepository) {
             //Puede no venir el param
             page = 1;
         }
-        offersRepository.getOffers(filter, options, page).then(result => {
+        offersRepository.getOffersPg(filter, options, page).then(result => {
             let lastPage = result.total / 4;
             if (result.total % 4 > 0) { // Sobran decimales
                 lastPage = lastPage + 1;
@@ -226,7 +304,12 @@ module.exports = function (app, offersRepository, usersRepository) {
                 pages: pages,
                 currentPage: page,
             }
-            res.render("shop.twig", response);
+            // Sacar destacadas
+            let filterH = {highlight: true};
+            offersRepository.getOffers(filterH, {}).then(offersH => {
+                response.offersH = offersH;
+                res.render("shop.twig", response);
+            });
         }).catch(error => {
             res.send("Se ha producido un error al listar las ofertas " + error)
         });
@@ -267,7 +350,7 @@ module.exports = function (app, offersRepository, usersRepository) {
         let filtroSongAuthor = {$and: [{"_id": songId}, {"author": user}]}
         let filtroBougthSong = {$and: [{"songId": songId}, {"user": user}]}
         let options = {}
-        offersRepository.getOffers(filtroSongAuthor, options).then(songs => {
+        offersRepository.getOffersPg(filtroSongAuthor, options).then(songs => {
             if (songs === null || songs.length > 0) {
                 callBackFunc(false)
             } else {

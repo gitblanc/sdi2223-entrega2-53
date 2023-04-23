@@ -65,7 +65,7 @@ module.exports = {
         }
     },
 
-    getOffers: async function (filter, options, page) {
+    getOffersPg: async function (filter, options, page) {
         try {
             const limit = 5;
             const client = await this.mongoClient.connect(this.app.get('connectionStrings'));
@@ -82,6 +82,18 @@ module.exports = {
         }
     },
 
+    getOffers: async function (filter, options) {
+        try {
+            const client = await this.mongoClient.connect(this.app.get('connectionStrings'));
+            const database = client.db("myWallapop");
+            const collectionName = 'offers';
+            const offersCollection = database.collection(collectionName);
+            return await offersCollection.find(filter, options).toArray();
+        } catch (error) {
+            throw (error);
+        }
+    },
+
     deleteOffer: async function (filter, options) {
         try {
             const client = await this.mongoClient.connect(this.app.get('connectionStrings'));
@@ -93,5 +105,17 @@ module.exports = {
         } catch (error) {
             throw (error);
         }
-    }
+    },
+
+    updateOffer: async function(newOffer, filter, options) {
+        try {
+            const client = await this.mongoClient.connect(this.app.get('connectionStrings'));
+            const database = client.db("myWallapop");
+            const collectionName = 'offers';
+            const offersCollection = database.collection(collectionName);
+            return await offersCollection.updateOne(filter, {$set: newOffer}, options);
+        } catch (error) {
+            throw (error);
+        }
+    },
 };
