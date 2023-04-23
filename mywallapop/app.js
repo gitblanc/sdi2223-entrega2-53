@@ -82,6 +82,9 @@ const appLogger = require('./logger');
 require("./routes/users.js")(app, usersRepository, appLogger);
 require("./routes/offers.js")(app, offersRepository, usersRepository, appLogger);
 
+//ROUTES API
+require("./routes/api/offersAPIv1.0.js")(app, offersRepository, usersRepository);
+
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
