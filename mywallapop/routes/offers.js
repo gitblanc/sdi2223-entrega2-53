@@ -192,6 +192,102 @@ module.exports = function (app, offersRepository, usersRepository) {
         });
     });
 
+    /**
+     * Responde a la petición GET cuando quiere ver todas las ofertas en la vista de shop
+     */
+    app.get('/shop', function (req, res) {
+        let filter = {};
+        let options = {sort: {title: 1}};
+
+        if (req.query.search != null && typeof (req.query.search) != "undefined" && req.query.search != "") {
+            filter = {"title": { $regex: new RegExp(".*" + req.query.search + ".*", "i") }};
+        }
+
+        let page = parseInt(req.query.page); // Es String !!!
+        if (typeof req.query.page === "undefined" || req.query.page === null || req.query.page === "0") {
+            //Puede no venir el param
+            page = 1;
+        }
+        offersRepository.getOffers(filter, options, page).then(result => {
+            let lastPage = result.total / 4;
+            if (result.total % 4 > 0) { // Sobran decimales
+                lastPage = lastPage + 1;
+            }
+            let pages = []; // paginas mostrar
+            for (let i = page - 2; i <= page + 2; i++) {
+                if (i > 0 && i <= lastPage) {
+                    pages.push(i);
+                }
+            }
+            let response = {
+                email: req.session.user,
+                amount: req.session.userAmount,
+                offers: result.offers,
+                pages: pages,
+                currentPage: page,
+            }
+            res.render("shop.twig", response);
+        }).catch(error => {
+            res.send("Se ha producido un error al listar las ofertas " + error)
+        });
+    });
+
+    /**
+     * Responde a la petición GET para comprar una oferta
+     */
+    app.get('/offers/buy/:id', function (req, res) {
+        let songId = ObjectId(req.params.id);
+        let shop = {
+            user: req.session.user,
+            songId: songId
+        }
+
+        userCanBuySong(shop.user, songId, function(CanBuy) {
+            if(CanBuy) {
+                offersRepository.buyOffer(shop, function (shopId) {
+                    if (shopId == null) {
+                        res.send("Error al realizar la compra");
+                    } else {
+                        res.redirect("/purchases");
+                    }
+                })
+            } else {
+                res.send("Error comprar la oferta.");
+            }
+        });
+    });
+
+    /**
+     * Función que mira si la oferta se podría comprar
+     * @param user
+     * @param songId
+     * @param callBackFunc
+     */
+    function userCanBuySong(user, songId, callBackFunc) {
+        let filtroSongAuthor = {$and: [{"_id": songId}, {"author": user}]}
+        let filtroBougthSong = {$and: [{"songId": songId}, {"user": user}]}
+        let options = {}
+        offersRepository.getOffers(filtroSongAuthor, options).then(songs => {
+            if (songs === null || songs.length > 0) {
+                callBackFunc(false)
+            } else {
+                offersRepository.getPurchases(filtroBougthSong, options).then(purchasedIds => {
+                    if (purchasedIds === null || purchasedIds.length > 0) {
+                        callBackFunc(false)
+                    } else {
+                        callBackFunc(true)
+                    }
+                }).catch(err => {
+                        callBackFunc(false)
+                    }
+                );
+            }
+        }).catch(err => {
+                callBackFunc(false)
+            }
+        )
+    }
+
     // ___________________________________________________________________
 
     /**

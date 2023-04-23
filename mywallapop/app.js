@@ -44,7 +44,8 @@ let jwt = require('jsonwebtoken');
 app.set('jwt', jwt);
 
 const {MongoClient} = require("mongodb");
-const url = 'mongodb://localhost:27017';
+const url = 'mongodb+srv://admin:sdi@eii-sdi-cluster.py3eqdo.mongodb.net/?retryWrites=true&w=majority'
+//const url = 'mongodb://localhost:27017';
 app.set('connectionStrings', url);
 
 
@@ -62,7 +63,9 @@ logsRepository.init(app, MongoClient)
 // _________ USER_SESSION_CHECK _____________
 app.use("/users/list", userSessionRouter);
 app.use("/offers/list", userSessionRouter);
-app.use("/purchases", userSessionRouter);
+app.use("/offers/buy",userSessionRouter);
+app.use("/purchases",userSessionRouter);
+app.use("/shop/",userSessionRouter);
 // _________________________________________
 
 
