@@ -82,7 +82,7 @@ module.exports = function (app, offersRepository, usersRepository) {
             if (typeof req.query.page === "undefined" || req.query.page === null || req.query.page === 0)
                 page = 1;
 
-            offersRepository.getOffers(filter, options, page).then(purchasedOffers => {
+            offersRepository.getOffersPg(filter, options, page).then(purchasedOffers => {
                 let lastPage = purchasedOffers.total / 4;
                 if (purchasedOffers.total % 4 > 0) {
                     lastPage = lastPage + 1;
@@ -122,7 +122,7 @@ module.exports = function (app, offersRepository, usersRepository) {
             page = 1;
 
         // obtiene las ofertas
-        offersRepository.getOffers(filter, {}, page).then(result => {
+        offersRepository.getOffersPg(filter, {}, page).then(result => {
             let lastPage = result.total / 4;
             if (result.total % 4 > 0) {
                 lastPage = lastPage + 1;
@@ -286,7 +286,7 @@ module.exports = function (app, offersRepository, usersRepository) {
             //Puede no venir el param
             page = 1;
         }
-        offersRepository.getOffers(filter, options, page).then(result => {
+        offersRepository.getOffersPg(filter, options, page).then(result => {
             let lastPage = result.total / 4;
             if (result.total % 4 > 0) { // Sobran decimales
                 lastPage = lastPage + 1;
@@ -304,7 +304,12 @@ module.exports = function (app, offersRepository, usersRepository) {
                 pages: pages,
                 currentPage: page,
             }
-            res.render("shop.twig", response);
+            // Sacar destacadas
+            let filterH = {highlight: true};
+            offersRepository.getOffers(filterH, {}).then(offersH => {
+                response.offersH = offersH;
+                res.render("shop.twig", response);
+            });
         }).catch(error => {
             res.send("Se ha producido un error al listar las ofertas " + error)
         });
@@ -345,7 +350,7 @@ module.exports = function (app, offersRepository, usersRepository) {
         let filtroSongAuthor = {$and: [{"_id": songId}, {"author": user}]}
         let filtroBougthSong = {$and: [{"songId": songId}, {"user": user}]}
         let options = {}
-        offersRepository.getOffers(filtroSongAuthor, options).then(songs => {
+        offersRepository.getOffersPg(filtroSongAuthor, options).then(songs => {
             if (songs === null || songs.length > 0) {
                 callBackFunc(false)
             } else {
