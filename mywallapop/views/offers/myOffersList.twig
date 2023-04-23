@@ -13,6 +13,7 @@
             <th scope="col">Fecha de publicación</th>
             <th scope="col">Precio</th>
             <th scope="col">Estado</th>
+            <th scope="col">Normal/Destacada</th>
             <th scope="col"></th>
         </tr>
         </thead>
@@ -27,6 +28,13 @@
                     <td>Vendida</td>
                 {% else %}
                     <td>En venta</td>
+                {% endif %}
+                {% if offer.highlight %}
+                    <td>Destacada</td>
+                {% else %}
+                    <td>
+                        <a href="/publications/highlight/{{ offer._id }}">Normal</a>
+                    </td>
                 {% endif %}
                 <td>
                     <a href="/offers/delete/{{ offer._id }}">Eliminar</a>
