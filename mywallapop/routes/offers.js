@@ -277,7 +277,7 @@ module.exports = function (app, offersRepository, usersRepository) {
             page = 1;
         }
 
-        offersRepository.getOffersPg(filter, options, page).then(result => {
+        offersRepository.getOffersPg(filter, options, page, 5).then(result => {
             let lastPage = result.total / 5;
             if (result.total % 5 > 0) { // Sobran decimales
                 lastPage = lastPage + 1;
