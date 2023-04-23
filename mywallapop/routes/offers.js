@@ -277,8 +277,8 @@ module.exports = function (app, offersRepository, usersRepository) {
             page = 1;
         }
         offersRepository.getOffersPg(filter, options, page,5).then(result => {
-            let lastPage = result.total / 4;
-            if (result.total % 4 > 0) { // Sobran decimales
+            let lastPage = result.total / 5;
+            if (result.total % 5 > 0) { // Sobran decimales
                 lastPage = lastPage + 1;
             }
             let pages = []; // paginas mostrar
@@ -315,39 +315,88 @@ module.exports = function (app, offersRepository, usersRepository) {
             offerId: offerId
         }
 
-        userCanBuySong(shop.user, offerId, function(CanBuy) {
-            if(CanBuy) {
-                offersRepository.buyOffer(shop, function (shopId) {
-                    if (shopId == null) {
-                        res.send("Error al realizar la compra de la oferta");
-                    } else {
+        checkCanAffordOffer(shop.user, offerId, function(canAffordIt) {
+            checkOwnOffer(shop.user, offerId, function(notOwnOffer) {
+                removeFromUserAmount(shop.user, offerId, function () {
+                    if(notOwnOffer && canAffordIt) {
+                        offersRepository.buyOffer(shop, function (shopId) {
+                            if (shopId == null) {
+                                res.send("Error al realizar la compra de la oferta");
+                            }
+                            let newOffer = [{sold: true, buyer: shop.user }];
+                            let filter = {_id: ObjectId(req.params.id)};
+                            let options = {upsert: false};
+                            offersRepository.updateOffer(newOffer, filter, options).then(() => {
+                                res.redirect("/purchases");
+                            }).catch(error => {
+                                res.send("Error al actualizar la oferta " + error);
+                            })
+                        })
+                    } else if(!notOwnOffer) {
+                        res.send("Error comprar la oferta: Eres el vendedor no puedes comprarla");
+                    } else if(!canAffordIt) {
+                        res.send("Error comprar la oferta: dinero insuficiente");
+                    }
+                    else {
                         res.redirect("/purchases");
                     }
                 })
-                //Hay que decrementar el dinero y marcar como vendido la oferta
-                let offer = {
-                    buyer: req.session.user,
-                    sold: true
-                }
-            } else {
-                res.send("Error comprar la oferta.");
-            }
-        });
+            });
+        })
+
     });
 
+    function removeFromUserAmount(user, offerId, callBackFunc) {
+        let newUser = {amount: user.amount - 20};
+        let filter = {_id: user._id};
+        let filterOffer = [{"_id": offerId}];
+        // que no se cree un documento nuevo, si no existe
+        let options = {upsert: false};
+        offersRepository.getOffers(filterOffer, options).then(offer => {
+            let newUser = {amount: user.amount - offer.amount};
+            usersRepository.updateUser(newUser, filter, options).then(() => {
+                user.userAmount = newUser.amount;
+                callBackFunc(true);
+            }).catch(error => {
+                callBackFunc(false);
+            })
+
+        }).catch(error => {
+            callBackFunc(false);
+        })
+    }
+
+    function checkCanAffordOffer(user, offerId, callBackFunc) {
+        let filterOffer = [{"_id": offerId}];
+        let options = {}
+
+        offersRepository.getOffers(filterOffer, options).then(offer => {
+            if (offer === null || offer.length > 0) {
+                callBackFunc(false)
+            } else if (user.amount < offer.amount) {
+                callBackFunc(false)
+            } else {
+                callBackFunc(true)
+            }
+        }).catch(err => {
+            callBackFunc(false)
+        })
+    }
+
     /**
-     * Función que mira si la oferta se podría comprar
+     * Función que mira si la oferta se podría comprar y mira si se esta comprando una oferta que ha sido publicada por si mismo
+     * además de comprobar si ya está comrpado o no
      * @param user
      * @param offerId
      * @param callBackFunc
      */
-    function userCanBuySong(user, offerId, callBackFunc) {
-        let filterOfferAuthor = {$and: [{"_id": offerId}, {"author": user}]}
+    function checkOwnOffer(user, offerId, callBackFunc) {
+        let filterOfferAuthor = {$and: [{"_id": offerId}, {"seller": user}]}
         let filterBougthOffer= {$and: [{"offerId": offerId}, {"user": user}]}
         let options = {}
-        offersRepository.getOffers(filterOfferAuthor, options).then(songs => {
+        offersRepository.getOffers(filterOfferAuthor, options).then(offers => {
 
-            if (songs === null || songs.length > 0) {
+            if (offers === null || offers.length > 0) {
                 callBackFunc(false)
             } else {
                 offersRepository.getPurchases(filterBougthOffer, options).then(purchasedIds => {
