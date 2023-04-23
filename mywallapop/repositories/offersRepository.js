@@ -36,6 +36,21 @@ module.exports = {
             throw (error);
         }
     },
+    buyOffer: function (shop, callbackFunction) {
+        this.mongoClient.connect(this.app.get('connectionStrings'), function (err, dbClient) {
+            if (err) {
+                callbackFunction(null)
+            } else {
+                const database = dbClient.db("myWallapop");
+                const collectionName = 'purchases';
+                const purchasesCollection = database.collection(collectionName);
+                purchasesCollection.insertOne(shop)
+                    .then(result => callbackFunction(result.insertedId))
+                    .then(() => dbClient.close())
+                    .catch(err => callbackFunction({error: err.message}));
+            }
+        });
+    },
 
     insertOffer: async function (offer) {
         try {

@@ -60,7 +60,9 @@ const userSessionRouter = require('./routes/userSessionRouter');
 // _________ USER_SESSION_CHECK _____________
 app.use("/users/list", userSessionRouter);
 app.use("/offers/list", userSessionRouter);
+app.use("/offers/buy",userSessionRouter);
 app.use("/purchases",userSessionRouter);
+app.use("/shop/",userSessionRouter);
 // _________________________________________
 
 
