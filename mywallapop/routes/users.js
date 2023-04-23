@@ -189,7 +189,7 @@ module.exports = function (app, usersRepository) {
                     req.session.user = userToSave.email;
                     req.session.userAmount = userToSave.amount;
                     appLogger.createNewLog("El usuario " + userToSave.email + " se registró correctamente", "ALTA");
-                    res.redirect("/offers/list");
+                    res.redirect("/publications");
 
                 }).catch(error => {
                     appLogger.createNewLog("Error al registrar el usuario " + req.body.email + " en la base de datos", "ALTA-ERR");
