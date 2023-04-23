@@ -64,17 +64,6 @@ module.exports = {
             throw (error);
         }
     },
-    updateSong: async function (offer, filter, options) {
-        try {
-            const client = await this.mongoClient.connect(this.app.get('connectionStrings'));
-            const database = client.db("myWallapop");
-            const collectionName = 'offers';
-            const songsCollection = database.collection(collectionName);
-            const result = await songsCollection.updateOne(filter, {$set: offer}, options);
-            return result;
-        } catch (error) {
-        }
-    },
 
     getOffersPg: async function (filter, options, page) {
         try {
