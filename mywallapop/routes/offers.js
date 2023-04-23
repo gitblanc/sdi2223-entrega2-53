@@ -236,21 +236,26 @@ module.exports = function (app, offersRepository, usersRepository) {
      * Responde a la petición GET para comprar una oferta
      */
     app.get('/offers/buy/:id', function (req, res) {
-        let songId = ObjectId(req.params.id);
+        let offerId = ObjectId(req.params.id);
         let shop = {
             user: req.session.user,
-            songId: songId
+            offerId: offerId
         }
 
-        userCanBuySong(shop.user, songId, function(CanBuy) {
+        userCanBuySong(shop.user, offerId, function(CanBuy) {
             if(CanBuy) {
                 offersRepository.buyOffer(shop, function (shopId) {
                     if (shopId == null) {
-                        res.send("Error al realizar la compra");
+                        res.send("Error al realizar la compra de la oferta");
                     } else {
                         res.redirect("/purchases");
                     }
                 })
+                //Hay que decrementar el dinero y marcar como vendido la oferta
+                let offer = {
+                    buyer: req.session.user,
+                    sold: true
+                }
             } else {
                 res.send("Error comprar la oferta.");
             }
@@ -260,18 +265,18 @@ module.exports = function (app, offersRepository, usersRepository) {
     /**
      * Función que mira si la oferta se podría comprar
      * @param user
-     * @param songId
+     * @param offerId
      * @param callBackFunc
      */
-    function userCanBuySong(user, songId, callBackFunc) {
-        let filtroSongAuthor = {$and: [{"_id": songId}, {"author": user}]}
-        let filtroBougthSong = {$and: [{"songId": songId}, {"user": user}]}
+    function userCanBuySong(user, offerId, callBackFunc) {
+        let filterOfferAuthor = {$and: [{"_id": offerId}, {"author": user}]}
+        let filterBougthOffer= {$and: [{"offerId": offerId}, {"user": user}]}
         let options = {}
-        offersRepository.getOffers(filtroSongAuthor, options).then(songs => {
+        offersRepository.getOffers(filterOfferAuthor, options).then(songs => {
             if (songs === null || songs.length > 0) {
                 callBackFunc(false)
             } else {
-                offersRepository.getPurchases(filtroBougthSong, options).then(purchasedIds => {
+                offersRepository.getPurchases(filterBougthOffer, options).then(purchasedIds => {
                     if (purchasedIds === null || purchasedIds.length > 0) {
                         callBackFunc(false)
                     } else {
