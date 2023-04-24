@@ -321,7 +321,9 @@ module.exports = function (app, offersRepository, usersRepository) {
                     if(notOwnOffer && canAffordIt) {
                         offersRepository.buyOffer(shop, function (shopId) {
                             if (shopId == null) {
-                                res.send("Error al realizar la compra de la oferta");
+                                res.redirect("/shop" +
+                                    "?message=Error a la hora de comprar una oferta" +
+                                    "&messageType=alert-danger ");
                             }
                             let newOffer = [{sold: true, buyer: shop.user }];
                             let filter = {_id: ObjectId(req.params.id)};
@@ -329,13 +331,19 @@ module.exports = function (app, offersRepository, usersRepository) {
                             offersRepository.updateOffer(newOffer, filter, options).then(() => {
                                 res.redirect("/purchases");
                             }).catch(error => {
-                                res.send("Error al actualizar la oferta " + error);
+                                res.redirect("/shop" +
+                                    "?message=Error a la hora de comprar una oferta" + error +
+                                    "&messageType=alert-danger ");
                             })
                         })
                     } else if(!notOwnOffer) {
-                        res.send("Error comprar la oferta: Eres el vendedor no puedes comprarla");
+                        res.redirect("/shop" +
+                            "?message=Error comprar la oferta: Eres el vendedor no puedes comprarla"  +
+                            "&messageType=alert-danger ");
                     } else if(!canAffordIt) {
-                        res.send("Error comprar la oferta: dinero insuficiente");
+                        res.redirect("/shop" +
+                            "?message=Error comprar la oferta: dinero insuficiente"  +
+                            "&messageType=alert-danger ");
                     }
                     else {
                         res.redirect("/purchases");
