@@ -19,6 +19,7 @@ app.use(function (req, res, next) {
     next();
 });
 
+
 let expressSession = require('express-session');
 app.use(expressSession({
     secret: 'abcdefg',
@@ -66,6 +67,9 @@ app.use("/offers/buy",userSessionRouter);
 app.use("/purchases",userSessionRouter);
 app.use("/publications",userSessionRouter);
 app.use("/shop/",userSessionRouter);
+const userTokenRouter = require('./routes/userTokenRouter');
+app.use("/api/v1.0/songs/", userTokenRouter);
+
 // _________________________________________
 
 
@@ -79,7 +83,7 @@ var offersRouter = require('./routes/offers');
 const appLogger = require('./logger');
 
 //ROUTES
-require("./routes/users.js")(app, usersRepository, appLogger);
+require("./routes/users.js")(app, usersRepository,offersRepository, appLogger);
 require("./routes/offers.js")(app, offersRepository, usersRepository, appLogger);
 
 //ROUTES API

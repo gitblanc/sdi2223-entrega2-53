@@ -116,7 +116,30 @@ module.exports = {
             throw (error);
         }
     },
-
+    deleteOffers: async function (filter, options) {
+        try {
+            const client = await this.mongoClient.connect(this.app.get('connectionStrings'));
+            const database = client.db("myWallapop");
+            const collectionName = 'offers';
+            const offersCollection = database.collection(collectionName);
+            const result = await offersCollection.deleteMany(filter, options);
+            return result;
+        } catch (error) {
+            throw (error);
+        }
+    },
+    deletePurchases: async function (filter, options) {
+        try {
+            const client = await this.mongoClient.connect(this.app.get('connectionStrings'));
+            const database = client.db("myWallapop");
+            const collectionName = 'purchases';
+            const purchasesCollection = database.collection(collectionName);
+            const result = await purchasesCollection.deleteMany(filter, options);
+            return result;
+        } catch (error) {
+            throw (error);
+        }
+    },
     updateOffer: async function(newOffer, filter, options) {
         try {
             const client = await this.mongoClient.connect(this.app.get('connectionStrings'));
