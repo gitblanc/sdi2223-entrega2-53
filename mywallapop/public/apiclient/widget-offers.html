@@ -1,0 +1,60 @@
+<div id="widget-offers">
+
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <th>Título</th>
+            <th>Descripción</th>
+            <th>Precio €</th>
+            <th class="col-md-1"></th>
+        </tr>
+        </thead>
+        <tbody id="offersTableBody"></tbody>
+    </table>
+</div>
+<script>
+    window.history.pushState("", "", "/apiclient/client.html?w=offers");
+    var offers;
+
+    function loadOffers() {
+        $.ajax({
+            url: URLbase + "/offers",
+            type: "GET",
+            data: {},
+            dataType: "json",
+            headers: {token: token},
+            success: function (response) {
+                offers = response.offers;
+                updateOffersTable(offers);
+            },
+            error: function (error) {
+                $("#main-container").load("widget-login.html");
+            },
+        });
+    }
+
+    function updateOffersTable(offers) {
+        $("#offersTableBody").empty(); // Vaciar la tabla
+        for (i = 0; i < offers.length; i++) {
+            $("#offersTableBody").append(
+                "<tr id=" +
+                offers[i]._id +
+                ">" +
+                "<td>" +
+                offers[i].title +
+                "</td>" +
+                "<td>" +
+                offers[i].description +
+                "</td>" +
+                "<td>" +
+                offers[i].price +
+                "</td>" +
+                "</tr>"
+            );
+        }
+    }
+
+
+
+    loadOffers();
+</script>
