@@ -1,7 +1,7 @@
 const {ObjectId} = require("mongodb");
 const logsRepository = require("../repositories/logsRepository");
 const appLogger = require("../logger");
-module.exports = function (app, usersRepository) {
+module.exports = function (app, usersRepository, offersRepository) {
     app.get('/users', function (req, res) {
         appLogger.createNewLog("Acceso a la lista de usuarios", "PET");
         res.send('lista de usuarios');
@@ -47,15 +47,19 @@ module.exports = function (app, usersRepository) {
         })
     })
     app.get('/users/logs', function (req, res) {
-        let filter = {};
-        let options = {
-            sort: {date: -1} // ordena por fecha-hora en orden ascendente
-        };
-        if (req.session.user === '' || req.session.user === null || req.session.user === undefined) {
-            appLogger.createNewLog("Intento de acceso a los logs sin estar logueado", "PET-ERR");
-            res.redirect("/users/login");
-        } else {
-            renderLogs(req, res, filter, options);
+        if(req.session.user === 'admin@email.com') {
+            let filter = {};
+            let options = {
+                sort: {date: -1} // ordena por fecha-hora en orden ascendente
+            };
+            if (req.session.user === '' || req.session.user === null || req.session.user === undefined) {
+                appLogger.createNewLog("Intento de acceso a los logs sin estar logueado", "PET-ERR");
+                res.redirect("/users/login");
+            } else {
+                renderLogs(req, res, filter, options);
+            }
+        }else{
+            res.send("Solo el administrador puede acceder a lista de logs");
         }
     })
 
@@ -113,36 +117,40 @@ module.exports = function (app, usersRepository) {
         res.render("login.twig");
     })
     app.get("/users/list", function (req, res) {
-        let filter = {email: {$ne: 'admin@email.com'}};
-        let options = {};
-        let page = parseInt(req.query.page); // Es String !!!
-        if (typeof req.query.page === "undefined" || req.query.page === null || req.query.page === "0") { //Puede no venir el param
-            page = 1;
-        }
-        usersRepository.getUsers(filter, options, page).then(result => {
-            let lastPage = result.total / 4;
-            if (result.total % 4 > 0) { // Sobran decimales
-                lastPage = lastPage + 1;
+        if(req.session.user === 'admin@email.com') {
+            let filter = {email: {$ne: 'admin@email.com'}};
+            let options = {};
+            let page = parseInt(req.query.page); // Es String !!!
+            if (typeof req.query.page === "undefined" || req.query.page === null || req.query.page === "0") { //Puede no venir el param
+                page = 1;
             }
-            let pages = []; // paginas mostrar
-            for (let i = page - 2; i <= page + 2; i++) {
-                if (i > 0 && i <= lastPage) {
-                    pages.push(i);
+            usersRepository.getUsers(filter, options, page).then(result => {
+                let lastPage = result.total / 4;
+                if (result.total % 4 > 0) { // Sobran decimales
+                    lastPage = lastPage + 1;
                 }
-            }
-            let response = {
-                email: req.session.user,
-                amount: req.session.userAmount,
-                users: result.users,
-                pages: pages,
-                currentPage: page
-            }
-            appLogger.createNewLog("El administrador " + req.session.user + " accedió a la lista de usuarios", "PET");
-            res.render("users/userslist.twig", response);
-        }).catch(error => {
-            appLogger.createNewLog("Error al listar los usuarios", "PET-ERR");
-            res.send("Se ha producido un error al listar los usuarios " + error)
-        });
+                let pages = []; // paginas mostrar
+                for (let i = page - 2; i <= page + 2; i++) {
+                    if (i > 0 && i <= lastPage) {
+                        pages.push(i);
+                    }
+                }
+                let response = {
+                    email: req.session.user,
+                    amount: req.session.userAmount,
+                    users: result.users,
+                    pages: pages,
+                    currentPage: page
+                }
+                appLogger.createNewLog("El administrador " + req.session.user + " accedió a la lista de usuarios", "PET");
+                res.render("users/userslist.twig", response);
+            }).catch(error => {
+                appLogger.createNewLog("Error al listar los usuarios", "PET-ERR");
+                res.send("Se ha producido un error al listar los usuarios " + error)
+            });
+        }else{
+            res.send("Solo el administrador puede acceder a lista de usuarios");
+        }
     });
     app.get('/users/signup', function (req, res) {
         appLogger.createNewLog("Acceso a la página de registro", "PET");
@@ -221,8 +229,20 @@ module.exports = function (app, usersRepository) {
                         res.send("No se ha podido eliminar el usuario");
                         return null;
                     } else {
-                        appLogger.createNewLog("El usuario " + usersToDelete + " ha sido borrado correctamente", "PET");
-                        res.redirect("/users/list");
+                        let filterOffers = {seller: usersToDelete};
+                        offersRepository.deleteOffers(filterOffers,{}).then(result =>{
+                            let filterPurchases = {user: usersToDelete};
+                            offersRepository.deletePurchases(filterPurchases,{}).then(result =>{
+                                appLogger.createNewLog("El usuario " + usersToDelete + " ha sido borrado correctamente", "PET");
+                                res.redirect("/users/list");
+                            }).catch(error => {
+                                appLogger.createNewLog("Error al borrar las compras del usuario " + usersToDelete, "PET-ERR");
+                                res.send("Se ha producido un error al intentar eliminar las compras del usuario: " + error)
+                            });
+                        }).catch(error => {
+                            appLogger.createNewLog("Error al borrar las ofertas del usuario " + usersToDelete, "PET-ERR");
+                            res.send("Se ha producido un error al intentar eliminar las ofertas del usuario: " + error)
+                        });
                     }
                 }).catch(error => {
                     appLogger.createNewLog("Error al borrar el usuario " + usersToDelete, "PET-ERR");
@@ -246,8 +266,20 @@ module.exports = function (app, usersRepository) {
                         res.send("No se han podido eliminar los usuarios");
                         return null;
                     } else {
-                        appLogger.createNewLog("Los usuarios " + usersToDelete + " han sido borrados correctamente", "PET");
-                        res.redirect("/users/list");
+                        let filterOffers = {seller: {$in: usersToDelete}};
+                        offersRepository.deleteOffers(filterOffers,{}).then(result =>{
+                            let filterPurchases = {user: {$in: usersToDelete}};
+                            offersRepository.deletePurchases(filterPurchases,{}).then(result =>{
+                                appLogger.createNewLog("Los usuarios" + usersToDelete + " han sido borrado correctamente", "PET");
+                                res.redirect("/users/list");
+                            }).catch(error => {
+                                appLogger.createNewLog("Error al borrar las compras de los usuarios " + usersToDelete, "PET-ERR");
+                                res.send("Se ha producido un error al intentar eliminar las compras de los usuarios: " + error)
+                            });
+                        }).catch(error => {
+                            appLogger.createNewLog("Error al borrar las ofertas del usuario " + usersToDelete, "PET-ERR");
+                            res.send("Se ha producido un error al intentar eliminar las ofertas del usuario: " + error)
+                        });
                     }
                 }).catch(error => {
                     appLogger.createNewLog("Error al borrar los usuarios " + usersToDelete, "PET-ERR");
