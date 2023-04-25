@@ -277,8 +277,8 @@ module.exports = function (app, offersRepository, usersRepository) {
             page = 1;
         }
         offersRepository.getOffersPg(filter, options, page,5).then(result => {
-            let lastPage = result.total / 4;
-            if (result.total % 4 > 0) { // Sobran decimales
+            let lastPage = result.total / 5;
+            if (result.total % 5 > 0) { // Sobran decimales
                 lastPage = lastPage + 1;
             }
             let pages = []; // paginas mostrar
@@ -315,44 +315,104 @@ module.exports = function (app, offersRepository, usersRepository) {
             offerId: offerId
         }
 
-        userCanBuySong(shop.user, offerId, function(CanBuy) {
-            if(CanBuy) {
-                offersRepository.buyOffer(shop, function (shopId) {
-                    if (shopId == null) {
-                        res.send("Error al realizar la compra de la oferta");
-                    } else {
+        checkCanAffordOffer(shop.user, offerId, function(canAffordIt) {
+            checkOwnOffer(shop.user, offerId, function(notOwnOffer) {
+                    if(notOwnOffer && canAffordIt) {
+                        offersRepository.buyOffer(shop, function (shopId) {
+                            if (shopId == null) {
+                                res.redirect("/shop" +
+                                    "?message=Error a la hora de comprar una oferta" +
+                                    "&messageType=alert-danger ");
+                            }
+                            let newOffer = {sold: true, buyer: shop.user };
+                            let filter = {_id: ObjectId(req.params.id)};
+                            let options = {upsert: false};
+                            offersRepository.updateOffer(newOffer, filter, options).then(() => {
+                                removeFromUserAmount(req, res, offerId, function (isCorrect) {
+                                    if(isCorrect) {
+                                        res.redirect("/purchases");
+                                    } else {
+                                        res.send("Error")
+                                    }
+                                })
+                            }).catch(error => {
+                                res.redirect("/shop" +
+                                    "?message=Error a la hora de comprar una oferta" + error +
+                                    "&messageType=alert-danger ");
+                            })
+                        })
+
+                    } else if(!notOwnOffer) {
+                        res.redirect("/shop" +
+                            "?message=Error comprar la oferta: Eres el vendedor no puedes comprarla"  +
+                            "&messageType=alert-danger ");
+                    } else if(!canAffordIt) {
+                        res.redirect("/shop" +
+                            "?message=Error comprar la oferta: dinero insuficiente"  +
+                            "&messageType=alert-danger ");
+                    }
+                    else {
                         res.redirect("/purchases");
                     }
-                })
-                //Hay que decrementar el dinero y marcar como vendido la oferta
-                let offer = {
-                    buyer: req.session.user,
-                    sold: true
-                }
-            } else {
-                res.send("Error comprar la oferta.");
-            }
-        });
+
+            });
+        })
+
     });
 
+    function removeFromUserAmount(req, res, offerId, callBackFunc) {
+        let filter = {email: req.session.user};
+        let filterOffer = {"_id": offerId};
+        let options = {upsert: false};
+        offersRepository.findOffer(filterOffer, {}).then(offer => {
+            let newUser = {amount: req.session.userAmount - offer.price};
+            usersRepository.updateUser(newUser, filter, options).then(() => {
+                req.session.userAmount = newUser.amount;
+                callBackFunc(true);
+            }).catch(error => {
+                callBackFunc(false);
+            })
+
+        }).catch(error => {
+            callBackFunc(false);
+        })
+    }
+
+    function checkCanAffordOffer(user, offerId, callBackFunc) {
+        let filterOffer = {"_id": offerId};
+        let options = {}
+
+        offersRepository.findOffer(filterOffer, options).then(offer => {
+            if (offer === null) {
+                callBackFunc(false)
+            } else if (user.userAmount < offer.amount) {
+                callBackFunc(false)
+            } else {
+                callBackFunc(true)
+            }
+        }).catch(err => {
+            callBackFunc(false)
+        })
+    }
+
     /**
-     * Función que mira si la oferta se podría comprar
+     * Función que mira si la oferta se podría comprar y mira si se esta comprando una oferta que ha sido publicada por si mismo
+     * además de comprobar si ya está comrpado o no
      * @param user
      * @param offerId
      * @param callBackFunc
      */
-    function userCanBuySong(user, offerId, callBackFunc) {
-        let filterOfferAuthor = {$and: [{"_id": offerId}, {"author": user}]}
-        let filterBougthOffer= {$and: [{"offerId": offerId}, {"user": user}]}
+    function checkOwnOffer(user, offerId, callBackFunc) {
+        let filterOfferAuthor = {"_id": offerId, "seller": user}
+        let filterBougthOffer= {"offerId": offerId, "user": user}
         let options = {}
-        offersRepository.getOffers(filterOfferAuthor, options).then(songs => {
-
-            if (songs === null || songs.length > 0) {
-                callBackFunc(false)
+        offersRepository.findOffer(filterOfferAuthor, options).then(offers => {
+            if (offers === null) {
+                callBackFunc(true)
             } else {
                 offersRepository.getPurchases(filterBougthOffer, options).then(purchasedIds => {
-                    if (purchasedIds === null || purchasedIds.length > 0) {
-                        callBackFunc(false)
+                    if (purchasedIds === null || purchasedIds.length === 0) {
+                        callBackFunc(true)
                     } else {
                         callBackFunc(true)
                     }
