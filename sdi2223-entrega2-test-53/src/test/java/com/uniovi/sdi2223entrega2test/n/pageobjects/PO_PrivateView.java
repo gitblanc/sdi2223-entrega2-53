@@ -9,7 +9,7 @@ import org.openqa.selenium.support.ui.Select;
 public class PO_PrivateView extends PO_NavView {
     static public void fillFormAddMark(WebDriver driver, int userOrder, String descriptionp, String scorep) {
         //Esperamos 5 segundo a que carge el DOM porque en algunos equipos falla
-        SeleniumUtils.waitSeconds(driver, 5);
+
         //Seleccionamos el alumnos userOrder
         new Select(driver.findElement(By.id("user"))).selectByIndex(userOrder);
         //Rellenemos el campo de descripción
