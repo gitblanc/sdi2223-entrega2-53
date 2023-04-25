@@ -79,12 +79,9 @@ var usersRouter = require('./routes/users');
 var offersRouter = require('./routes/offers');
 // _______________________________
 
-//LOGGER
-const appLogger = require('./logger');
-
 //ROUTES
-require("./routes/users.js")(app, usersRepository,offersRepository, appLogger);
-require("./routes/offers.js")(app, offersRepository, usersRepository, appLogger);
+require("./routes/users.js")(app, usersRepository,offersRepository);
+require("./routes/offers.js")(app, offersRepository, usersRepository);
 
 //ROUTES API
 require("./routes/api/offersAPIv1.0.js")(app, offersRepository, usersRepository);
