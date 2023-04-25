@@ -317,7 +317,6 @@ module.exports = function (app, offersRepository, usersRepository) {
 
         checkCanAffordOffer(shop.user, offerId, function(canAffordIt) {
             checkOwnOffer(shop.user, offerId, function(notOwnOffer) {
-                removeFromUserAmount(shop.user, offerId, function () {
                     if(notOwnOffer && canAffordIt) {
                         offersRepository.buyOffer(shop, function (shopId) {
                             if (shopId == null) {
@@ -325,17 +324,24 @@ module.exports = function (app, offersRepository, usersRepository) {
                                     "?message=Error a la hora de comprar una oferta" +
                                     "&messageType=alert-danger ");
                             }
-                            let newOffer = [{sold: true, buyer: shop.user }];
+                            let newOffer = {sold: true, buyer: shop.user };
                             let filter = {_id: ObjectId(req.params.id)};
                             let options = {upsert: false};
                             offersRepository.updateOffer(newOffer, filter, options).then(() => {
-                                res.redirect("/purchases");
+                                removeFromUserAmount(req, res, offerId, function (isCorrect) {
+                                    if(isCorrect) {
+                                        res.redirect("/purchases");
+                                    } else {
+                                        res.send("Error")
+                                    }
+                                })
                             }).catch(error => {
                                 res.redirect("/shop" +
                                     "?message=Error a la hora de comprar una oferta" + error +
                                     "&messageType=alert-danger ");
                             })
                         })
+
                     } else if(!notOwnOffer) {
                         res.redirect("/shop" +
                             "?message=Error comprar la oferta: Eres el vendedor no puedes comprarla"  +
@@ -348,22 +354,20 @@ module.exports = function (app, offersRepository, usersRepository) {
                     else {
                         res.redirect("/purchases");
                     }
-                })
+
             });
         })
 
     });
 
-    function removeFromUserAmount(user, offerId, callBackFunc) {
-        let newUser = {amount: user.amount - 20};
-        let filter = {_id: user._id};
-        let filterOffer = [{"_id": offerId}];
-        // que no se cree un documento nuevo, si no existe
+    function removeFromUserAmount(req, res, offerId, callBackFunc) {
+        let filter = {email: req.session.user};
+        let filterOffer = {"_id": offerId};
         let options = {upsert: false};
-        offersRepository.getOffers(filterOffer, options).then(offer => {
-            let newUser = {amount: user.amount - offer.amount};
+        offersRepository.findOffer(filterOffer, {}).then(offer => {
+            let newUser = {amount: req.session.userAmount - offer.price};
             usersRepository.updateUser(newUser, filter, options).then(() => {
-                user.userAmount = newUser.amount;
+                req.session.userAmount = newUser.amount;
                 callBackFunc(true);
             }).catch(error => {
                 callBackFunc(false);
@@ -375,13 +379,13 @@ module.exports = function (app, offersRepository, usersRepository) {
     }
 
     function checkCanAffordOffer(user, offerId, callBackFunc) {
-        let filterOffer = [{"_id": offerId}];
+        let filterOffer = {"_id": offerId};
         let options = {}
 
-        offersRepository.getOffers(filterOffer, options).then(offer => {
-            if (offer === null || offer.length > 0) {
+        offersRepository.findOffer(filterOffer, options).then(offer => {
+            if (offer === null) {
                 callBackFunc(false)
-            } else if (user.amount < offer.amount) {
+            } else if (user.userAmount < offer.amount) {
                 callBackFunc(false)
             } else {
                 callBackFunc(true)
@@ -399,17 +403,16 @@ module.exports = function (app, offersRepository, usersRepository) {
      * @param callBackFunc
      */
     function checkOwnOffer(user, offerId, callBackFunc) {
-        let filterOfferAuthor = {$and: [{"_id": offerId}, {"seller": user}]}
-        let filterBougthOffer= {$and: [{"offerId": offerId}, {"user": user}]}
+        let filterOfferAuthor = {"_id": offerId, "seller": user}
+        let filterBougthOffer= {"offerId": offerId, "user": user}
         let options = {}
-        offersRepository.getOffers(filterOfferAuthor, options).then(offers => {
-
-            if (offers === null || offers.length > 0) {
-                callBackFunc(false)
+        offersRepository.findOffer(filterOfferAuthor, options).then(offers => {
+            if (offers === null) {
+                callBackFunc(true)
             } else {
                 offersRepository.getPurchases(filterBougthOffer, options).then(purchasedIds => {
-                    if (purchasedIds === null || purchasedIds.length > 0) {
-                        callBackFunc(false)
+                    if (purchasedIds === null || purchasedIds.length === 0) {
+                        callBackFunc(true)
                     } else {
                         callBackFunc(true)
                     }
