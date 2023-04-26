@@ -1,14 +1,13 @@
 package com.uniovi.sdi2223entrega2test.n;
 
-import com.uniovi.sdi2223entrega2test.n.pageobjects.PO_HomeView;
-import com.uniovi.sdi2223entrega2test.n.pageobjects.PO_SignUpView;
-import com.uniovi.sdi2223entrega2test.n.pageobjects.PO_View;
+import com.uniovi.sdi2223entrega2test.n.pageobjects.*;
 import com.uniovi.sdi2223entrega2test.n.util.SeleniumUtils;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.*;
+import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
@@ -69,14 +68,14 @@ class Sdi2223Entrega2TestApplicationTests {
     @Test
     @Order(1)
     void PR01() {
-        PO_HomeView.clickOption(driver, "signup", "class", "btn btn-primary");
+        PO_NavView.clickOption(driver, "signup", "class", "btn btn-primary");
         PO_SignUpView.fillForm(driver, "emailvalido@pruebas.com", "aaaa" ,"bbbb",
                 "2001-01-01", "77777", "77777");
         String checkText = "Lista de ofertas propias";
         List<WebElement> result = PO_View.checkElementBy(driver, "text", checkText);
         Assertions.assertEquals(checkText, result.get(0).getText());
 
-        PO_HomeView.clickOption(driver, "logout", "class", "btn btn-primary");
+        PO_LoginView.logout(driver);
     }
 
     /**
@@ -85,7 +84,7 @@ class Sdi2223Entrega2TestApplicationTests {
     @Test
     @Order(2)
     public void PR02() {
-        PO_HomeView.clickOption(driver, "signup", "class", "btn btn-primary");
+        PO_NavView.clickOption(driver, "signup", "class", "btn btn-primary");
         PO_SignUpView.fillForm(driver, "", "", "", "", "77777",
                 "77777");
         SeleniumUtils.textIsPresentOnPage(driver, "Registrar usuario");
@@ -119,42 +118,100 @@ class Sdi2223Entrega2TestApplicationTests {
         Assertions.assertEquals(checkText, result.get(0).getText());
     }
 
+    /**
+     * [Prueba5] Inicio de sesión con datos válidos (administrador).
+     */
     @Test
     @Order(5)
-    public void PR05() {
-        Assertions.assertTrue(false, "PR05 sin hacer");
+    void PR05(){
+        PO_HomeView.clickOption(driver, "login", "class", "btn btn-primary");
+        PO_LoginView.loginAsAdmin(driver);
+        PO_LoginView.logout(driver);
     }
 
+    /**
+     * [Prueba6] Inicio de sesión con datos válidos (usuario estándar).
+     */
     @Test
     @Order(6)
-    public void PR06() {
-        Assertions.assertTrue(false, "PR06 sin hacer");
+    void PR06(){
+        PO_HomeView.clickOption(driver, "login", "class", "btn btn-primary");
+        PO_LoginView.login(driver, "user01@email.com", "user01", "Lista de ofertas propias");
+        PO_LoginView.logout(driver);
     }
 
+    /**
+     * [Prueba7] Inicio de sesión con datos inválidos (usuario estándar, email existente, pero contraseña incorrecta).
+     */
     @Test
     @Order(7)
-    public void PR07() {
-        Assertions.assertTrue(false, "PR07 sin hacer");
+    void PR07(){
+        PO_HomeView.clickOption(driver, "login", "class", "btn btn-primary");
+        PO_LoginView.login(driver, "user01@email.com", "error", "Email o password incorrecto");
     }
 
+    /**
+     * [Prueba8] Inicio de sesión con datos inválidos (campo email o contraseña vacíos).
+     */
     @Test
     @Order(8)
     public void PR08() {
-        Assertions.assertTrue(false, "PR08 sin hacer");
+        PO_HomeView.clickOption(driver, "login", "class", "btn btn-primary");
+        PO_LoginView.login(driver, "user01@email.com", "", "Identificación de usuario");
     }
 
+    /**
+     * [Prueba9] Hacer clic en la opción de salir de sesión y comprobar que se redirige a la página de inicio de
+     * sesión (Login).
+     */
     @Test
     @Order(9)
-    public void PR09() {
-        Assertions.assertTrue(false, "PR09 sin hacer");
+    void PR09(){
+        PO_HomeView.clickOption(driver, "login", "class", "btn btn-primary");
+        PO_LoginView.login(driver, "user01@email.com", "user01", "Lista de ofertas propias");
+        PO_LoginView.logout(driver);
     }
 
+    /**
+     * [Prueba10] Comprobar que el botón cerrar sesión no está visible si el usuario no está autenticado.
+     */
     @Test
     @Order(10)
-    public void PR10() {
-        Assertions.assertTrue(false, "PR10 sin hacer");
+    void PR10(){
+        SeleniumUtils.textIsNotPresentOnPage(driver, "Desconectarse");
     }
 
+    /**
+     * [Prueba11] Mostrar el listado de usuarios y comprobar que se muestran todos los que existen en el sistema, contabilizando al menos el número de usuarios.
+     */
+    @Test
+    @Order(11)
+    void PR11(){
+        PO_LoginView.loginAsAdmin(driver);
+        List<WebElement> usersList = PO_AdminView.getUsersList(driver);
+
+        Assertions.assertEquals(3, usersList.size());
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba12] Ir a la lista de usuarios, borrar el primer usuario de la lista, comprobar que la lista se actualiza
+     * y dicho usuario desaparece.
+     */
+    @Test
+    @Order(12)
+    void PR12(){
+        PO_HomeView.clickOption(driver, "login", "class", "btn btn-primary");
+        PO_LoginView.fillLoginForm(driver, "admin@email.com", "admin");
+
+        WebElement firstUserBeforeDeletion = PO_AdminView.getUsersList(driver).get(0);
+        // La primera celda de la fila de un usuario es el correo
+        String firstUserBeforeDeletionEmail = firstUserBeforeDeletion.findElement(By.tagName("td")).getText();
+        PO_AdminView.deleteUsers(driver, 0);
+        Assertions.assertNotEquals(firstUserBeforeDeletionEmail, PO_AdminView.getUsersList(driver).get(0).findElement(By.tagName("td")).getText());
+
+        PO_HomeView.clickOption(driver, "logout", "class", "btn btn-primary");
+    }
 
     /* Ejemplos de pruebas de llamada a una API-REST */
     /* ---- Probamos a obtener lista de canciones sin token ---- */
