@@ -1,12 +1,19 @@
 package com.uniovi.sdi2223entrega2test.n;
 
+import com.uniovi.sdi2223entrega2test.n.pageobjects.PO_HomeView;
+import com.uniovi.sdi2223entrega2test.n.pageobjects.PO_SignUpView;
+import com.uniovi.sdi2223entrega2test.n.pageobjects.PO_View;
+import com.uniovi.sdi2223entrega2test.n.util.SeleniumUtils;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.*;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
+
+import java.util.List;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class Sdi2223Entrega2TestApplicationTests {
@@ -41,37 +48,75 @@ class Sdi2223Entrega2TestApplicationTests {
     //Antes de la primera prueba
     @BeforeAll
     static public void begin() {
+        driver.navigate().to(URL+"/tests/insert");
+        // Esperar a que se inserten
+        PO_View.checkElementBy(driver, "text", "datos de los tests insertados");
     }
 
     //Al finalizar la última prueba
     @AfterAll
     static public void end() {
+        driver.navigate().to(URL+"/tests/delete");
+        // Esperar a que se borren
+        PO_View.checkElementBy(driver, "text", "datos de los tests quitados");
 //Cerramos el navegador al finalizar las pruebas
         driver.quit();
     }
 
+    /**
+     * [Prueba1] Registro de Usuario con datos válidos.
+     */
     @Test
     @Order(1)
     void PR01() {
-        Assertions.assertTrue(true, "PR01 sin hacer");
+        PO_HomeView.clickOption(driver, "signup", "class", "btn btn-primary");
+        PO_SignUpView.fillForm(driver, "emailvalido@pruebas.com", "aaaa" ,"bbbb",
+                "2001-01-01", "77777", "77777");
+        String checkText = "Lista de ofertas propias";
+        List<WebElement> result = PO_View.checkElementBy(driver, "text", checkText);
+        Assertions.assertEquals(checkText, result.get(0).getText());
+
+        PO_HomeView.clickOption(driver, "logout", "class", "btn btn-primary");
     }
 
+    /**
+     * [Prueba2] Registro de Usuario con datos inválidos (email, nombre, apellidos y fecha de nacimiento vacíos).
+     */
     @Test
     @Order(2)
     public void PR02() {
-        Assertions.assertTrue(false, "PR02 sin hacer");
+        PO_HomeView.clickOption(driver, "signup", "class", "btn btn-primary");
+        PO_SignUpView.fillForm(driver, "", "", "", "", "77777",
+                "77777");
+        SeleniumUtils.textIsPresentOnPage(driver, "Registrar usuario");
     }
 
+    /**
+     * [Prueba3] Registro de Usuario con datos inválidos (repetición de contraseña inválida).
+     */
     @Test
     @Order(3)
     public void PR03() {
-        Assertions.assertTrue(false, "PR03 sin hacer");
+        PO_HomeView.clickOption(driver, "signup", "class", "btn btn-primary");
+        PO_SignUpView.fillForm(driver, "emailvalido2@pruebas.comm", "aaaa", "bbbb",
+                "2001-01-01", "77777", "66666");
+        String checkText = "Se ha producido un error al registrar el usuario, contraseñas distintas.";
+        List<WebElement> result = PO_View.checkElementBy(driver, "text", checkText);
+        Assertions.assertEquals(checkText, result.get(0).getText());
     }
 
+    /**
+     * [Prueba4] Registro de Usuario con datos inválidos (email existente).
+     */
     @Test
     @Order(4)
     public void PR04() {
-        Assertions.assertTrue(false, "PR04 sin hacer");
+        PO_HomeView.clickOption(driver, "signup", "class", "btn btn-primary");
+        PO_SignUpView.fillForm(driver, "emailvalido@pruebas.com", "aaaa", "bbbb",
+                "2001-01-01", "77777", "77777");
+        String checkText = "Se ha producido un error al registrar el usuario, email ya existe.";
+        List<WebElement> result = PO_View.checkElementBy(driver, "text", checkText);
+        Assertions.assertEquals(checkText, result.get(0).getText());
     }
 
     @Test
@@ -113,6 +158,7 @@ class Sdi2223Entrega2TestApplicationTests {
 
     /* Ejemplos de pruebas de llamada a una API-REST */
     /* ---- Probamos a obtener lista de canciones sin token ---- */
+    /*
     @Test
     @Order(11)
     public void PR11() {
@@ -137,4 +183,5 @@ class Sdi2223Entrega2TestApplicationTests {
         //4. Comprobamos que el servicio ha tenido exito
         Assertions.assertEquals(200, response.getStatusCode());
     }
+    */
 }
