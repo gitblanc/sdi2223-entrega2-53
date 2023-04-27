@@ -36,9 +36,9 @@
                 $("#main-container").load("./widget-offers.html");
             },
             error: function (error) {
-                $(".alert alert-danger").remove();
+                $("#div-errors").remove();
                 $("#widget-login")
-                    .prepend("<div class='alert alert-danger'>Usuario o contraseña incorrectos</div>");
+                    .prepend("<div id='div-errors' class='alert alert-danger'>Usuario o contraseña incorrectos</div>");
 
 
             }

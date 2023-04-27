@@ -68,7 +68,7 @@ app.use("/purchases",userSessionRouter);
 app.use("/publications",userSessionRouter);
 app.use("/shop/",userSessionRouter);
 const userTokenRouter = require('./routes/userTokenRouter');
-app.use("/api/v1.0/songs/", userTokenRouter);
+app.use("/api/v1.0/offers/", userTokenRouter);
 
 // _________________________________________
 
