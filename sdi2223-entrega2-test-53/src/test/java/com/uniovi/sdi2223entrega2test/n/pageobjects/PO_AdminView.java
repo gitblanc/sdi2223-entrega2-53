@@ -11,17 +11,15 @@ public class PO_AdminView extends PO_NavView {
 	static public List<WebElement> getUsersList(WebDriver driver) {
 		return PO_View.checkElementBy(driver, "@name", "check");
 	}
-
 	static public void deleteUsers(WebDriver driver, int... indexes) {
 		List<WebElement> usersList = getUsersList(driver);
 
 		for (int index : indexes) {
 			WebElement userToDelete = usersList.get(index);
-			WebElement checkbox = userToDelete.findElement(By.name("ids"));
-			checkbox.click();
+			userToDelete.click();
 		}
 
-		By boton = By.xpath("/html/body/div/form/input");
+		By boton = By.xpath("/html/body/div/form/button");
 		driver.findElement(boton).click();
 	}
 
