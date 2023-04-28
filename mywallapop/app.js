@@ -53,8 +53,13 @@ app.set('connectionStrings', url);
 //_____________REPOSITORIES___________________
 const usersRepository = require("./repositories/usersRepository.js");
 const offersRepository = require("./repositories/offersRepository.js");
+const messagesRepository = require("./repositories/messagesRepository.js");
+const chatsRepository = require("./repositories/chatsRepository.js");
 usersRepository.init(app, MongoClient);
 offersRepository.init(app, MongoClient);
+messagesRepository.init(app, MongoClient);
+chatsRepository.init(app, MongoClient);
+
 const userSessionRouter = require('./routes/userSessionRouter');
 //logs
 const logsRepository = require('./repositories/logsRepository');
@@ -68,7 +73,7 @@ app.use("/purchases",userSessionRouter);
 app.use("/publications",userSessionRouter);
 app.use("/shop/",userSessionRouter);
 const userTokenRouter = require('./routes/userTokenRouter');
-app.use("/api/v1.0/songs/", userTokenRouter);
+app.use("/api/v1.0/offers", userTokenRouter);
 
 // _________________________________________
 
@@ -88,7 +93,7 @@ require("./routes/offers.js")(app, offersRepository, usersRepository, appLogger)
 require("./routes/dbManagerForTests.js")(app, offersRepository, usersRepository);
 
 //ROUTES API
-require("./routes/api/offersAPIv1.0.js")(app, offersRepository, usersRepository);
+require("./routes/api/offersAPIv1.0.js")(app, offersRepository, usersRepository, chatsRepository, messagesRepository);
 
 
 // view engine setup
