@@ -4,8 +4,10 @@
         <thead>
         <tr>
             <th>Título</th>
-            <th>Descripción</th>
+            <th>Detalle</th>
             <th>Precio €</th>
+            <th>Fecha de publicación</th>
+            <th>Email del vendedor</th>
             <th class="col-md-1"></th>
         </tr>
         </thead>
@@ -48,6 +50,12 @@
                 "</td>" +
                 "<td>" +
                 offers[i].price +
+                "</td>" +
+                "<td>" +
+                offers[i].date +
+                "</td>" +
+                "<td>" +
+                offers[i].seller +
                 "</td>" +
                 "</tr>"
             );

@@ -45,8 +45,8 @@ let jwt = require('jsonwebtoken');
 app.set('jwt', jwt);
 
 const {MongoClient} = require("mongodb");
-const url = 'mongodb+srv://admin:sdi@eii-sdi-cluster.py3eqdo.mongodb.net/?retryWrites=true&w=majority'
-//const url = 'mongodb://localhost:27017';
+//const url = 'mongodb+srv://admin:sdi@eii-sdi-cluster.py3eqdo.mongodb.net/?retryWrites=true&w=majority'
+const url = 'mongodb://localhost:27017';
 app.set('connectionStrings', url);
 
 
@@ -68,7 +68,7 @@ app.use("/purchases",userSessionRouter);
 app.use("/publications",userSessionRouter);
 app.use("/shop/",userSessionRouter);
 const userTokenRouter = require('./routes/userTokenRouter');
-app.use("/api/v1.0/songs/", userTokenRouter);
+app.use("/api/v1.0/offers/", userTokenRouter);
 
 // _________________________________________
 
@@ -85,6 +85,7 @@ const appLogger = require('./logger');
 //ROUTES
 require("./routes/users.js")(app, usersRepository,offersRepository, appLogger);
 require("./routes/offers.js")(app, offersRepository, usersRepository, appLogger);
+require("./routes/dbManagerForTests.js")(app, offersRepository, usersRepository);
 
 //ROUTES API
 require("./routes/api/offersAPIv1.0.js")(app, offersRepository, usersRepository);
