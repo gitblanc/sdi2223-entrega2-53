@@ -66,4 +66,7 @@ module.exports = function (app, offersRepository, usersRepository) {
             res.json({error: "Se ha producido un error al recuperar las ofertas."})
         });
     });
+
+
+
 }
