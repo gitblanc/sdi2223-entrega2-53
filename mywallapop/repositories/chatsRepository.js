@@ -28,5 +28,18 @@ module.exports = {
         } catch (error) {
             throw (error);
         }
+    },
+
+    insertChat: async function (chat) {
+        try {
+            const client = await this.mongoClient.connect(this.app.get('connectionStrings'));
+            const database = client.db("myWallapop");
+            const collectionName = 'chats';
+            const chatsCollection = database.collection(collectionName);
+            const result = await chatsCollection.insertOne(chat);
+            return result.insertedId;
+        } catch (error) {
+            throw (error);
+        }
     }
 };

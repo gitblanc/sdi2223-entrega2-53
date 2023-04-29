@@ -169,7 +169,7 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
 
     /**
      * Dado el id de una oferta y el otro usuario (que debe estar en la URL si el solicitador es el vendedor)
-     * muestra el listado de los mensajes de una conversación.
+     * muestra el listado de los mensajes de una conversación. Si el chat no existe, la crea
      */
     app.get("/api/v1.0/offers/chats/byoffer/:offerId", function (req, res) {
         // Obtengo parámetros de la URL
@@ -193,16 +193,19 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
             }
             let filter = {offer: offerId, user: userClient};
             chatsRepository.findChat(filter, {}).then(chat => {
-                let filterMessages = {chat: chat._id}
-                messagesRepository.getMessages(filterMessages, {}).then(messages => {
-
-                    res.status(200);
-                    res.json({messages: messages});
-
-                }).catch(error => {
-                    res.status(500);
-                    res.json({error: "Se ha producido un error al recuperar los mensajes." + error})
-                })
+                // Si no encontró un chat
+                if (chat === null || typeof chat === "undefined") {
+                    // Crearlo
+                    chat = {
+                        offer: offerId,
+                        user: userClient
+                    }
+                    chatsRepository.insertChat(chat).then(insertedId => {
+                        getMessages(res, insertedId);
+                    })
+                } else {
+                    getMessages(res, chat._id);
+                }
             }).catch(error => {
                 res.status(500);
                 res.json({error: "Se ha producido un error el chat." + error})
@@ -213,8 +216,21 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
         })
     });
 
+    function getMessages(res, chatId) {
+        let filterMessages = {chat: chatId}
+        messagesRepository.getMessages(filterMessages, {}).then(messages => {
+
+            res.status(200);
+            res.json({messages: messages});
+
+        }).catch(error => {
+            res.status(500);
+            res.json({error: "Se ha producido un error al recuperar los mensajes." + error})
+        })
+    }
+
     /**
-     * Dado el id de una conversación da sus mensajes
+     * Dado el id de una conversación da sus mensajes. No la crea si no existe. Este método SOLO SE USA EN LAS PRUEBAS
      */
     app.get("/api/v1.0/offers/chats/:chatId", function (req, res) {
         let chatId = ObjectId(req.params.chatId);
