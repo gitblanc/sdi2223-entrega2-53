@@ -121,7 +121,7 @@ module.exports = function (app, usersRepository, offersRepository) {
             let filter = {email: {$ne: 'admin@email.com'}};
             let options = {};
             let page = parseInt(req.query.page); // Es String !!!
-            if (typeof req.query.page === "undefined" || req.query.page === null || req.query.page === "0") { //Puede no venir el param
+            if (typeof req.query.page === "undefined" || req.query.page === null || req.query.page === 0) { //Puede no venir el param
                 page = 1;
             }
             usersRepository.getUsers(filter, options, page).then(result => {
