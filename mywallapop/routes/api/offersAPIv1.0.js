@@ -104,6 +104,70 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
     });
 
     /**
+     * Petición POST que añadirá un mensjae  ala base de datos. Para añadirlo la oferta tiene que existir
+     */
+    app.post("/api/v1.0/messages", function(req, res) {
+        try {
+            const dateAux = new Date();
+
+            let message = {
+                sender: req.body.user,
+                text: req.body.text,
+                date: dateAux.getDate() + "/" + dateAux.getMonth() + "/" + dateAux.getFullYear(),
+                hour: dateAux.getHours() + ":" + dateAux.getMinutes() + ":" + dateAux.getSeconds(),
+                read: false
+            }
+
+            let offerId = ObjectId(req.params.id);
+            let options = {};
+
+            let isValid = true;
+
+            if (message.sender === null || message.sender === "") {
+                isValid = false;
+            }
+
+            if (message.text === null || message.text === ""){
+                isValid = false;
+            }
+
+            if(isValid) {
+                offersRepository.findOffer({_id:offerId}, {}).then(offer => {
+                    if(offer != null) {
+                        if(offer.seller != message.sender) {
+                            messagesRepository.insertMessage(message, function (messageId) {
+                                if(messageId == null) {
+                                    res.send("Se ha producido un error al añadir el mensaje")
+                                } else {
+                                    res.status(201);
+                                    res.json( {
+                                        message: "Mansaje añadido correctamente.",
+                                        _id: messageId
+                                    })
+                                }
+                            })
+                        } else {
+                            res.status(500);
+                            res.send("No te puedes mandar un mensaje a ti mismo.")
+                        }
+
+                    } else {
+                        res.status(500);
+                        res.send("Oferta no encontrada.")
+                    }
+                })
+            } else {
+                res.status(409);
+                res.send("Alguno de los campos del mensaje no son validos");
+            }
+
+        } catch (e) {
+            res.status(500);
+            res.json({error: "Se ha producido un error al intentar añadir el mensaje: " + e})
+        }
+    })
+
+    /**
      * Dado el id de una oferta y el otro usuario (que debe estar en la URL si el solicitador es el vendedor)
      * muestra el listado de los mensajes de una conversación.
      */
@@ -165,4 +229,5 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
             res.json({error: "Se ha producido un error al recuperar los mensajes." + error})
         })
     });
+
 }
