@@ -90,9 +90,9 @@ module.exports = function (app, offersRepository, usersRepository) {
             if (typeof req.query.page === "undefined" || req.query.page === null || req.query.page === 0)
                 page = 1;
 
-            offersRepository.getOffersPg(filter, options, page, 4).then(purchasedOffers => {
-                let lastPage = purchasedOffers.total / 4;
-                if (purchasedOffers.total % 4 > 0) {
+            offersRepository.getOffersPg(filter, options, page, 5).then(purchasedOffers => {
+                let lastPage = purchasedOffers.total / 5;
+                if (purchasedOffers.total % 5 > 0) {
                     lastPage = lastPage + 1;
                 }
                 let pages = [];

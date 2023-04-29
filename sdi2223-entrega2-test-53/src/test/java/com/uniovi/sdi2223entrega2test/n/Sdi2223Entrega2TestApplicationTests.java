@@ -217,6 +217,83 @@ class Sdi2223Entrega2TestApplicationTests {
         PO_LoginView.logout(driver);
     }
 
+    /**
+     * [Prueba13] Ir a la lista de usuarios, borrar el último usuario de la lista, comprobar que la lista se actualiza
+     * y dicho usuario desaparece.
+     */
+    @Test
+    @Order(13)
+    void PR13(){
+        PO_LoginView.loginAsAdmin(driver);
+
+        // Ir a la última página
+        for (int i = 2; i < 4; i++) {
+            PO_AdminView.checkElementBy(driver, "id", "pl-" + i).get(0).click();
+        }
+
+        // Borrar último usuario
+        List<WebElement> usersList = PO_AdminView.getUsersList(driver);
+        String emailBefore = usersList.get(usersList.size()-1).getAttribute("value");
+        PO_AdminView.deleteUsers(driver, usersList.size()-1);
+        usersList = PO_AdminView.getUsersList(driver);
+        String emailAfter = usersList.get(usersList.size()-1).getAttribute("value");
+        Assertions.assertNotEquals(emailBefore, emailAfter);
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba14] Ir a la lista de usuarios, borrar 3 usuarios, comprobar que la lista se actualiza y dichos
+     * usuarios desaparecen.
+     */
+    @Test
+    @Order(14)
+    void PR14(){
+        PO_LoginView.loginAsAdmin(driver);
+
+        List<WebElement> users = PO_AdminView.getUsersList(driver);
+
+        String email2 = users.get(2).getAttribute("value");
+        String email3 = users.get(3).getAttribute("value");
+        String email4 = users.get(4).getAttribute("value");
+
+        PO_AdminView.deleteUsers(driver, 2, 3, 4);
+        users = PO_AdminView.getUsersList(driver);
+
+        for (WebElement user: users) {
+            String emailUser = user.getAttribute("value");
+            Assertions.assertNotEquals(emailUser, email2);
+            Assertions.assertNotEquals(emailUser, email3);
+            Assertions.assertNotEquals(emailUser, email4);
+        }
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba15] Ir al formulario de alta de oferta, rellenarla con datos válidos y pulsar el botón Enviar.
+     * Comprobar que la oferta sale en el listado de ofertas de dicho usuario.
+     */
+    @Test
+    @Order(15)
+    void PR15(){
+        PO_LoginView.login(driver, "user11@email.com", "user11", "Lista de ofertas propias");
+
+        PO_OwnOffersView.clickAddOfferOption(driver);
+        //Ahora vamos a rellenar la oferta.
+        String checkText = "Oferta nueva 1";
+        PO_AddOfferView.fillFormAddOffer(driver, checkText, "testsBorrar", "100");
+        //Esperamos a que se muestren los enlaces de paginación de la lista de ofertas publicadas
+        List<WebElement> elements = PO_View.checkElementBy(driver, "free", "//a[contains(@class, 'page-link')]");
+        //Nos vamos a la última página
+        elements.get(3).click();
+        //Comprobamos que aparece la oferta en la página
+        elements = PO_View.checkElementBy(driver, "text", checkText);
+        Assertions.assertEquals(checkText, elements.get(0).getText());
+
+        //PO_PrivateView.clickOption(driver, "logout", "class", "btn btn-primary");
+    }
+
     /* Ejemplos de pruebas de llamada a una API-REST */
     /* ---- Probamos a obtener lista de canciones sin token ---- */
     /*

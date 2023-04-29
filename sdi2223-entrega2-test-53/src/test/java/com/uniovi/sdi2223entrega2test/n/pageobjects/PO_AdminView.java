@@ -9,7 +9,7 @@ import java.util.List;
 public class PO_AdminView extends PO_NavView {
 
 	static public List<WebElement> getUsersList(WebDriver driver) {
-		return PO_View.checkElementBy(driver, "@name", "check");
+		return checkElementBy(driver, "@name", "check");
 	}
 	static public void deleteUsers(WebDriver driver, int... indexes) {
 		List<WebElement> usersList = getUsersList(driver);
