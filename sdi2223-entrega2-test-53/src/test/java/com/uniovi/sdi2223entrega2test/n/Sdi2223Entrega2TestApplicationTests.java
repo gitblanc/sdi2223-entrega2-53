@@ -69,7 +69,7 @@ class Sdi2223Entrega2TestApplicationTests {
     @Order(1)
     void PR01() {
         PO_NavView.clickOption(driver, "signup", "class", "btn btn-primary");
-        PO_SignUpView.fillForm(driver, "emailvalido@pruebas.com", "aaaa" ,"bbbb",
+        PO_SignUpView.fillForm(driver, "emailvalido@pruebas.com", "testsBorrar" ,"testsBorrar",
                 "2001-01-01", "77777", "77777");
         String checkText = "Lista de ofertas propias";
         List<WebElement> result = PO_View.checkElementBy(driver, "text", checkText);
@@ -188,9 +188,15 @@ class Sdi2223Entrega2TestApplicationTests {
     @Order(11)
     void PR11(){
         PO_LoginView.loginAsAdmin(driver);
-        List<WebElement> usersList = PO_AdminView.getUsersList(driver);
 
-        Assertions.assertEquals(3, usersList.size());
+        for (int i = 2; i <= 4; i++) {
+            List<WebElement> usersList = PO_AdminView.getUsersList(driver);
+            Assertions.assertEquals(5, usersList.size());
+            if (i < 4) {
+                PO_AdminView.checkElementBy(driver, "id", "pl-"+i).get(0).click();
+            }
+        }
+
         PO_LoginView.logout(driver);
     }
 
@@ -201,16 +207,14 @@ class Sdi2223Entrega2TestApplicationTests {
     @Test
     @Order(12)
     void PR12(){
-        PO_HomeView.clickOption(driver, "login", "class", "btn btn-primary");
-        PO_LoginView.fillLoginForm(driver, "admin@email.com", "admin");
+        PO_LoginView.loginAsAdmin(driver);
 
-        WebElement firstUserBeforeDeletion = PO_AdminView.getUsersList(driver).get(0);
-        // La primera celda de la fila de un usuario es el correo
-        String firstUserBeforeDeletionEmail = firstUserBeforeDeletion.findElement(By.tagName("td")).getText();
+        String emailBefore = PO_AdminView.getUsersList(driver).get(0).getAttribute("value");
         PO_AdminView.deleteUsers(driver, 0);
-        Assertions.assertNotEquals(firstUserBeforeDeletionEmail, PO_AdminView.getUsersList(driver).get(0).findElement(By.tagName("td")).getText());
+        String emailAfter = PO_AdminView.getUsersList(driver).get(0).getAttribute("value");
+        Assertions.assertNotEquals(emailBefore, emailAfter);
 
-        PO_HomeView.clickOption(driver, "logout", "class", "btn btn-primary");
+        PO_LoginView.logout(driver);
     }
 
     /* Ejemplos de pruebas de llamada a una API-REST */

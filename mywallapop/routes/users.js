@@ -259,7 +259,7 @@ module.exports = function (app, usersRepository, offersRepository) {
             }
             let filter = {email: {$in: usersToDelete}};
 
-            if (!usersToDelete.includes('admin@wmail.com')) {
+            if (!usersToDelete.includes('admin@email.com')) {
                 usersRepository.deleteUsers(filter, {}).then(result => {
                     if (result === null || result.deletedCount === 0) {
                         appLogger.createNewLog("Error al borrar los usuarios " + usersToDelete, "PET-ERR");
