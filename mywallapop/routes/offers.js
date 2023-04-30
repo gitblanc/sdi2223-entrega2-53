@@ -125,7 +125,7 @@ module.exports = function (app, offersRepository, usersRepository) {
      * publicadas por el usuario logeado
      */
     app.get("/publications", function (req, res) {
-        let numItemsPorPagina = 4;
+        let numItemsPorPagina = 5;
 
         let filter = {seller: req.session.user};
         let page = parseInt(req.query.page);
@@ -133,9 +133,9 @@ module.exports = function (app, offersRepository, usersRepository) {
             page = 1;
 
         // obtiene las ofertas
-        offersRepository.getOffersPg(filter, {}, page, 4).then(result => {
-            let lastPage = result.total / 4;
-            if (result.total % 4 > 0) {
+        offersRepository.getOffersPg(filter, {}, page, numItemsPorPagina).then(result => {
+            let lastPage = result.total / numItemsPorPagina;
+            if (result.total % numItemsPorPagina > 0) {
                 lastPage = lastPage + 1;
             }
             let pages = [];

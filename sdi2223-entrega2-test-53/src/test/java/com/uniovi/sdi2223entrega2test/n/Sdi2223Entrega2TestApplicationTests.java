@@ -283,15 +283,15 @@ class Sdi2223Entrega2TestApplicationTests {
         //Ahora vamos a rellenar la oferta.
         String checkText = "Oferta nueva 1";
         PO_AddOfferView.fillFormAddOffer(driver, checkText, "testsBorrar", "100");
-        //Esperamos a que se muestren los enlaces de paginación de la lista de ofertas publicadas
-        List<WebElement> elements = PO_View.checkElementBy(driver, "free", "//a[contains(@class, 'page-link')]");
-        //Nos vamos a la última página
-        elements.get(3).click();
+        // Ir a la última página
+        for (int i = 2; i < 4; i++) {
+            PO_AdminView.checkElementBy(driver, "id", "pl-" + i).get(0).click();
+        }
         //Comprobamos que aparece la oferta en la página
-        elements = PO_View.checkElementBy(driver, "text", checkText);
+        List<WebElement> elements = PO_View.checkElementBy(driver, "text", checkText);
         Assertions.assertEquals(checkText, elements.get(0).getText());
 
-        //PO_PrivateView.clickOption(driver, "logout", "class", "btn btn-primary");
+        PO_LoginView.logout(driver);
     }
 
     /* Ejemplos de pruebas de llamada a una API-REST */

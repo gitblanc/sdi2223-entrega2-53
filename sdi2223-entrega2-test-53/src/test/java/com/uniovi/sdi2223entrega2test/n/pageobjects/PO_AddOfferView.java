@@ -15,7 +15,7 @@ public class PO_AddOfferView extends PO_NavView {
         description.click();
         description.clear();
         description.sendKeys(descriptionp);
-        WebElement amount = driver.findElement(By.name("amount"));
+        WebElement amount = driver.findElement(By.name("price"));
         amount.click();
         amount.clear();
         amount.sendKeys(amountp);
