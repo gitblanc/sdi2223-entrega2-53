@@ -8,6 +8,7 @@ import io.restassured.specification.RequestSpecification;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.*;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
@@ -85,7 +86,7 @@ class Sdi2223Entrega2TestApplicationTests {
     @Order(2)
     public void PR02() {
         PO_NavView.clickOption(driver, "signup", "class", "btn btn-primary");
-        PO_SignUpView.fillForm(driver, "", "", "", "", "77777",
+        PO_SignUpView.fillForm(driver, "  ", "  ", "  ", "   ", "77777",
                 "77777");
         SeleniumUtils.textIsPresentOnPage(driver, "Registrar usuario");
     }
@@ -157,7 +158,7 @@ class Sdi2223Entrega2TestApplicationTests {
     @Order(8)
     public void PR08() {
         PO_HomeView.clickOption(driver, "login", "class", "btn btn-primary");
-        PO_LoginView.login(driver, "user01@email.com", "", "Identificación de usuario");
+        PO_LoginView.login(driver, "user01@email.com", "  ", "Identificación de usuario");
     }
 
     /**
@@ -271,12 +272,38 @@ class Sdi2223Entrega2TestApplicationTests {
     }
 
     /**
-     * [Prueba15] Ir al formulario de alta de oferta, rellenarla con datos válidos y pulsar el botón Enviar.
-     * Comprobar que la oferta sale en el listado de ofertas de dicho usuario.
+     * [Prueba15] Intentar borrar el usuario que se encuentra en sesión y comprobar que no ha sido borrado
+     * (porque no es un usuario administrador o bien, porque, no se puede borrar a sí mismo, si está
+     * autenticado).
      */
     @Test
     @Order(15)
     void PR15(){
+        PO_LoginView.loginAsAdmin(driver);
+
+        PO_AdminView.tryToDeleteAdmin(driver);
+        driver.navigate().to(URL+"/users/list");
+
+        List<WebElement> users = PO_AdminView.getUsersList(driver);
+
+        for (WebElement user: users) {
+            String emailUser = user.getAttribute("value");
+            Assertions.assertNotEquals(emailUser, "admin@email.com");
+        }
+
+        PO_LoginView.logout(driver);
+        // Comprobar que no hemos sido borrados
+        PO_LoginView.loginAsAdmin(driver);
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba16] Ir al formulario de alta de oferta, rellenarla con datos válidos y pulsar el botón Submit.
+     * Comprobar que la oferta sale en el listado de ofertas de dicho usuario.
+     */
+    @Test
+    @Order(16)
+    void PR16(){
         PO_LoginView.login(driver, "user11@email.com", "user11", "Lista de ofertas propias");
 
         PO_OwnOffersView.clickAddOfferOption(driver);
@@ -290,6 +317,40 @@ class Sdi2223Entrega2TestApplicationTests {
         //Comprobamos que aparece la oferta en la página
         List<WebElement> elements = PO_View.checkElementBy(driver, "text", checkText);
         Assertions.assertEquals(checkText, elements.get(0).getText());
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba17] Ir al formulario de alta de oferta, rellenarla con datos inválidos (campo título vacío y precio
+     * en negativo) y pulsar el botón Submit. Comprobar que se muestra el mensaje de campo inválido.
+     */
+    @Test
+    @Order(17)
+    void PR17(){
+        PO_LoginView.login(driver, "user11@email.com", "user11", "Lista de ofertas propias");
+
+        PO_OwnOffersView.clickAddOfferOption(driver);
+        PO_AddOfferView.fillFormAddOffer(driver, "  ", "testsBorrar", "-100");
+        String checkText = "Se ha producido un error al añadir la oferta, título vacío";
+        List<WebElement> result = PO_AddOfferView.checkElementBy(driver, "text", checkText);
+        Assertions.assertEquals(checkText , result.get(0).getText());
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba18] Mostrar el listado de ofertas para dicho usuario y comprobar que se muestran todas las que
+     * existen para este usuario.
+     */
+    @Test
+    @Order(18)
+    void PR18(){
+        PO_LoginView.login(driver, "user12@email.com", "user12", "Lista de ofertas propias");
+
+        Assertions.assertEquals(5, PO_OwnOffersView.getOffersList(driver).size());
+        PO_OwnOffersView.checkElementBy(driver, "id", "pl-2").get(0).click();
+        Assertions.assertEquals(5, PO_OwnOffersView.getOffersList(driver).size());
 
         PO_LoginView.logout(driver);
     }

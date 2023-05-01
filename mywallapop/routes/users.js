@@ -222,7 +222,7 @@ module.exports = function (app, usersRepository, offersRepository) {
         } else if (!Array.isArray(usersToDelete)) {
             usersToDelete = usersToDelete.substring(0, usersToDelete.length - 1);
             let filter = {email: usersToDelete};
-            if (usersToDelete != 'admin@email.com') {
+            if (usersToDelete !== 'admin@email.com') {
                 usersRepository.deleteUser(filter, {}).then(result => {
                     if (result === null || result.deletedCount === 0) {
                         appLogger.createNewLog("Error al borrar el usuario " + usersToDelete, "PET-ERR");

@@ -13,6 +13,6 @@ public class PO_OwnOffersView extends PO_NavView {
     }
 
     static public List<WebElement> getOffersList(WebDriver driver) {
-        return checkElementBy(driver, "@name", "check");
+        return checkElementBy(driver, "free", "//tbody/tr");
     }
 }
