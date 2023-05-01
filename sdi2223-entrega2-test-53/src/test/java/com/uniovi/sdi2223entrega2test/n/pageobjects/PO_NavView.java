@@ -32,6 +32,10 @@ public class PO_NavView extends PO_View {
         Assertions.assertEquals(1, elements.size());
     }
 
+    public static void clickAllOffersOption(WebDriver driver) {
+        clickOption(driver, "shop", "text", "Lista de todas las ofertas");
+    }
+
     /**
      * Selecciona el enlace de idioma correspondiente al texto textLanguage
      * P á g i n a 15 | 27

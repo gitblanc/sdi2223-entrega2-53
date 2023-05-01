@@ -15,4 +15,8 @@ public class PO_OwnOffersView extends PO_NavView {
     static public List<WebElement> getOffersList(WebDriver driver) {
         return checkElementBy(driver, "free", "//tbody/tr");
     }
+
+    public static void goToLastPage(WebDriver driver) {
+        checkElementBy(driver, "id", "pl-2").get(0).click();
+    }
 }

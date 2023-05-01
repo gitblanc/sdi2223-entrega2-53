@@ -36,4 +36,10 @@ public class PO_AdminView extends PO_NavView {
 		checkElementBy(driver, "text", "No es posible borrar el usuario administrador");
 	}
 
+	public static void goToLastUsersPage(WebDriver driver) {
+		for (int i = 2; i < 4; i++) {
+			checkElementBy(driver, "id", "pl-" + i).get(0).click();
+		}
+	}
+
 }

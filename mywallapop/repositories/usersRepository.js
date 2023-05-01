@@ -36,7 +36,7 @@ module.exports = {
             const collectionName = 'users';
             const usersCollection = database.collection(collectionName);
             const result = await usersCollection.insertMany(users);
-            return result.insertedId;
+            return result.insertedIds;
         } catch (error) {
             throw (error);
         }
