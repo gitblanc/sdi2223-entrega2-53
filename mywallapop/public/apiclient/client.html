@@ -19,7 +19,10 @@
             <img src="/images/logo.png" alt="logo"/></div>
         <div class="collapse navbar-collapse" id="myNavbar">
             <ul class="nav navbar-nav navbar-right" id="barra-menu-derecha">
-                <!-- Opciones de menú aqui --> </ul>
+                <!-- Opciones de menú aqui -->
+                <li><a onclick="$('#main-container').load('./widget-offers.html')" style="text-align: left">Ofertas</a></li>
+                <li><a onclick="$('#main-container').load('./widget-conversations.html')" style="text-align: left">Mis conversaciones</a></li>
+            </ul>
         </div>
     </div>
 </nav>
@@ -29,6 +32,10 @@
 <script>
     let token;
     let URLbase = "http://localhost:8081/api/v1.0";
+    let messages;
+    let chatId;
+    let offerOfChat;
+    let conversations;
     $("#main-container").load("widget-login.html");
 </script>
 </body>

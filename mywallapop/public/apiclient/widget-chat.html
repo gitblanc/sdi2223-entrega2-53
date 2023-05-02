@@ -1,0 +1,100 @@
+<div id="widget-chat">
+    <h1>Chat</h1>
+    <h2>Mensajes</h2>
+    <table id="messagesTable" class="table table-hover">
+        <thead>
+        <tr>
+            <th>Mensaje</th>
+            <th>Enviado por</th>
+            <th>Hora</th>
+        </tr>
+        </thead>
+        <tbody id="chatsTableBody"></tbody>
+    </table>
+
+    <h2>Enviar mensaje</h2>
+    <form class="form-horizontal" id="messageForm" action="">
+        <label for="message">Mensaje:</label>
+        <input type="text" id="message" name="message" placeholder="Escribe aquí tu mensaje...">
+        <button type="submit">Enviar</button>
+    </form>
+</div>
+<script>
+    // Select the "Enviar" button using its ID and add an event listener for the "click" event
+    document.getElementById("messageForm").addEventListener("submit", function (event) {
+        event.preventDefault(); // Prevent the form from submitting and reloading the page
+
+        // Get the value of the message input field
+        const message = document.getElementById("message").value;
+
+        if (message != null && message !== "") {
+            // Call the addMessage function with the message as an argument
+            addMessage(message).then(() => {
+                // Reload the messages
+                loadMessages();
+            });
+
+            // Clear the message input field
+            document.getElementById("message").value = "";
+        }
+    });
+
+    function loadMessages() {
+        $("#chatsTableBody").empty(); // Vaciar la tabla
+        for (let i = 0; i < messages.length; i++) {
+            $("#chatsTableBody").append(
+                "<tr>" +
+                "<td>" + messages[i].text + "</td>" +
+                "<td>" + messages[i].sender + "</td>" +
+                "<td>" + messages[i].date + "</td>" +
+                "</tr>"
+            );
+        }
+    }
+
+    async function addMessage(message) {
+        const url = `${URLbase}/chat/${offerOfChat._id}/${chatId}`;
+        const data = {offerId: offerOfChat._id, messageText: message, chatId: chatId};
+        const headers = {token: token};
+
+        $.ajax({
+            url,
+            type: "POST",
+            data: data,
+            dataType: "json",
+            headers,
+            success: function (response) {
+                reloadMessages().then(() => {
+                    loadMessages();
+                    $("#main-container").load("./widget-chat.html");
+                });
+            },
+            error: function (error) {
+                $("#main-container").load("widget-chat.html");
+            },
+        });
+
+        async function reloadMessages() {
+            $.ajax({
+                url: '/api/v1.0/offers/chats/byoffer/' + offerOfChat._id,
+                type: 'GET',
+                data: {},
+                dataType: 'json',
+                headers: {
+                    "token": token
+                },
+                success: function (response) {
+                    messages = response.messages;//we store the chat content (messages and )
+                },
+                error: function (error) {
+                    console.log(error);
+                    $("#main-container").load("./widget-offers.html");
+                }
+            });
+        }
+    }
+
+
+    loadMessages();
+    setInterval(loadMessages, 2000);//para recargar los mensajes
+</script>
