@@ -4,14 +4,24 @@ const appLogger = require("../logger");
 const chatsRepository = require("../repositories/chatsRepository");
 const messagesRepository = require("../repositories/messagesRepository");
 module.exports = function (app, usersRepository, offersRepository, chatsRepository,messagesRepository) {
+
+
     app.get('/users', function (req, res) {
         appLogger.createNewLog("Acceso a la lista de usuarios", "PET");
         res.send('lista de usuarios');
     })
+
+    /**
+     * GET: Permite realizar el login de un usuario
+     */
     app.get('/users/login', function (req, res) {
         appLogger.createNewLog("Acceso a la página de login", "PET");
         res.render("login.twig");
     })
+
+    /**
+     * POST: Permite realizar el login de un usuario
+     */
     app.post("/users/login", function (req, res) {
         let securePassword = app.get("crypto").createHmac("sha256", app.get("clave"))
             .update(req.body.password).digest("hex");
@@ -48,6 +58,10 @@ module.exports = function (app, usersRepository, offersRepository, chatsReposito
                 "&messageType=alert-danger ");
         })
     })
+
+    /**
+     * GET: Lista de logs
+     */
     app.get('/users/logs', function (req, res) {
         if(req.session.user === 'admin@email.com') {
             let filter = {};
@@ -80,6 +94,9 @@ module.exports = function (app, usersRepository, offersRepository, chatsReposito
         })
     }
 
+    /**
+     * POST: Lista de logs
+     */
     app.post('/users/logs', function (req, res) {
         let filter = {};
         let options = {
@@ -96,6 +113,10 @@ module.exports = function (app, usersRepository, offersRepository, chatsReposito
             renderLogs(req, res, filter, options);
         }
     })
+
+    /**
+     * POST: Logs delete
+     */
     app.post('/users/logs/delete', function (req, res) {
         let filter = {};
         if (req.session.user === '' || req.session.user === null || req.session.user === undefined) {
@@ -111,6 +132,10 @@ module.exports = function (app, usersRepository, offersRepository, chatsReposito
             })
         }
     })
+
+    /**
+     * GET: Permite hacer un logout de un usuario
+     */
     app.get('/users/logout', function (req, res) {
         let aux = req.session.user;
         req.session.user = null;
@@ -118,6 +143,10 @@ module.exports = function (app, usersRepository, offersRepository, chatsReposito
         appLogger.createNewLog("El usuario " + aux + " salió de sesión", "LOGOUT");
         res.render("login.twig");
     })
+
+    /**
+     * GET: Lista de usuarios
+     */
     app.get("/users/list", function (req, res) {
         if(req.session.user === 'admin@email.com') {
             let filter = {email: {$ne: 'admin@email.com'}};
@@ -154,10 +183,18 @@ module.exports = function (app, usersRepository, offersRepository, chatsReposito
             res.send("Solo el administrador puede acceder a lista de usuarios");
         }
     });
+
+    /**
+     * GET: Registra un usuario
+     */
     app.get('/users/signup', function (req, res) {
         appLogger.createNewLog("Acceso a la página de registro", "PET");
         res.render("signup.twig");
     })
+
+    /**
+     * POST: Registra un usuario
+     */
     app.post('/users/signup', function (req, res) {
         let securePassword = app.get("crypto").createHmac('sha256', app.get('clave')).update(req.body.password).digest('hex');
         let userToSave = {
@@ -216,6 +253,10 @@ module.exports = function (app, usersRepository, offersRepository, chatsReposito
                 "&messageType=alert-danger ");
         })
     });
+
+    /**
+     * Borra los usuarios pasados por parámetro
+     */
     app.post('/users/delete', function (req, res) {
         let usersToDelete = req.body.check;
 
