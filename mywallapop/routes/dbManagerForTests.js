@@ -29,15 +29,20 @@ module.exports = function (app, offersRepository, usersRepository) {
             // insertar ofertas
             let offers = [];
             for (let i = 1; i < 16; i++) {
+                let emailNumber = i.toString();
+                if (i < 10) {
+                    emailNumber = "0" + emailNumber;
+                }
                 for (let j = 1; j < 11; j++) {
                     let offer = {
-                        title: "Oferta-n"+j+"-user"+i,
+                        title: "Oferta-user"+emailNumber+"-n"+j,
                         description: "testsBorrar",
                         price: (j*10).toString(),
                         date: new Date().toLocaleDateString(),
                         seller: usersI[i-1].email,
                         buyer: null,
-                        sold: false
+                        // La primera oferta del usuario 14 estará marcada como vendida
+                        sold: i === 14 && j === 1
                     }
                     offers.push(offer);
                 }

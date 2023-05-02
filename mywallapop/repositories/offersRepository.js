@@ -71,7 +71,7 @@ module.exports = {
             const collectionName = 'offers';
             const offersCollection = database.collection(collectionName);
             const result = await offersCollection.insertMany(offer);
-            return result.insertedId;
+            return result.insertedIds;
         } catch (error) {
             throw (error);
         }

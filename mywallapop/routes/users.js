@@ -121,12 +121,12 @@ module.exports = function (app, usersRepository, offersRepository) {
             let filter = {email: {$ne: 'admin@email.com'}};
             let options = {};
             let page = parseInt(req.query.page); // Es String !!!
-            if (typeof req.query.page === "undefined" || req.query.page === null || req.query.page === "0") { //Puede no venir el param
+            if (typeof req.query.page === "undefined" || req.query.page === null || req.query.page === 0) { //Puede no venir el param
                 page = 1;
             }
             usersRepository.getUsers(filter, options, page).then(result => {
-                let lastPage = result.total / 4;
-                if (result.total % 4 > 0) { // Sobran decimales
+                let lastPage = result.total / 5;
+                if (result.total % 5 > 0) { // Sobran decimales
                     lastPage = lastPage + 1;
                 }
                 let pages = []; // paginas mostrar
@@ -222,7 +222,7 @@ module.exports = function (app, usersRepository, offersRepository) {
         } else if (!Array.isArray(usersToDelete)) {
             usersToDelete = usersToDelete.substring(0, usersToDelete.length - 1);
             let filter = {email: usersToDelete};
-            if (usersToDelete != 'admin@email.com') {
+            if (usersToDelete !== 'admin@email.com') {
                 usersRepository.deleteUser(filter, {}).then(result => {
                     if (result === null || result.deletedCount === 0) {
                         appLogger.createNewLog("Error al borrar el usuario " + usersToDelete, "PET-ERR");

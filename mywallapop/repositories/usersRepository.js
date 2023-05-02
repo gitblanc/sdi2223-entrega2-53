@@ -36,14 +36,14 @@ module.exports = {
             const collectionName = 'users';
             const usersCollection = database.collection(collectionName);
             const result = await usersCollection.insertMany(users);
-            return result.insertedId;
+            return result.insertedIds;
         } catch (error) {
             throw (error);
         }
     },
     getUsers: async function (filter, options, page) {
         try {
-            const limit = 4;
+            const limit = 5;
             const client = await this.mongoClient.connect(this.app.get('connectionStrings'));
             const database = client.db("myWallapop");
             const collectionName = 'users';

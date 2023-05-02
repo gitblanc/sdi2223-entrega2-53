@@ -8,6 +8,7 @@ import io.restassured.specification.RequestSpecification;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.*;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
@@ -85,7 +86,7 @@ class Sdi2223Entrega2TestApplicationTests {
     @Order(2)
     public void PR02() {
         PO_NavView.clickOption(driver, "signup", "class", "btn btn-primary");
-        PO_SignUpView.fillForm(driver, "", "", "", "", "77777",
+        PO_SignUpView.fillForm(driver, "  ", "  ", "  ", "   ", "77777",
                 "77777");
         SeleniumUtils.textIsPresentOnPage(driver, "Registrar usuario");
     }
@@ -157,7 +158,7 @@ class Sdi2223Entrega2TestApplicationTests {
     @Order(8)
     public void PR08() {
         PO_HomeView.clickOption(driver, "login", "class", "btn btn-primary");
-        PO_LoginView.login(driver, "user01@email.com", "", "Identificación de usuario");
+        PO_LoginView.login(driver, "user01@email.com", "  ", "Identificación de usuario");
     }
 
     /**
@@ -213,6 +214,292 @@ class Sdi2223Entrega2TestApplicationTests {
         PO_AdminView.deleteUsers(driver, 0);
         String emailAfter = PO_AdminView.getUsersList(driver).get(0).getAttribute("value");
         Assertions.assertNotEquals(emailBefore, emailAfter);
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba13] Ir a la lista de usuarios, borrar el último usuario de la lista, comprobar que la lista se actualiza
+     * y dicho usuario desaparece.
+     */
+    @Test
+    @Order(13)
+    void PR13(){
+        PO_LoginView.loginAsAdmin(driver);
+
+        // Ir a la última página
+        PO_AdminView.goToLastUsersPage(driver);
+
+        // Borrar último usuario
+        List<WebElement> usersList = PO_AdminView.getUsersList(driver);
+        String emailBefore = usersList.get(usersList.size()-1).getAttribute("value");
+        PO_AdminView.deleteUsers(driver, usersList.size()-1);
+        // Ir a la última página
+        PO_AdminView.goToLastUsersPage(driver);
+        usersList = PO_AdminView.getUsersList(driver);
+        String emailAfter = usersList.get(usersList.size()-1).getAttribute("value");
+        Assertions.assertNotEquals(emailBefore, emailAfter);
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba14] Ir a la lista de usuarios, borrar 3 usuarios, comprobar que la lista se actualiza y dichos
+     * usuarios desaparecen.
+     */
+    @Test
+    @Order(14)
+    void PR14(){
+        PO_LoginView.loginAsAdmin(driver);
+
+        List<WebElement> users = PO_AdminView.getUsersList(driver);
+
+        String email2 = users.get(2).getAttribute("value");
+        String email3 = users.get(3).getAttribute("value");
+        String email4 = users.get(4).getAttribute("value");
+
+        PO_AdminView.deleteUsers(driver, 2, 3, 4);
+        users = PO_AdminView.getUsersList(driver);
+
+        for (WebElement user: users) {
+            String emailUser = user.getAttribute("value");
+            Assertions.assertNotEquals(emailUser, email2);
+            Assertions.assertNotEquals(emailUser, email3);
+            Assertions.assertNotEquals(emailUser, email4);
+        }
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba15] Intentar borrar el usuario que se encuentra en sesión y comprobar que no ha sido borrado
+     * (porque no es un usuario administrador o bien, porque, no se puede borrar a sí mismo, si está
+     * autenticado).
+     */
+    @Test
+    @Order(15)
+    void PR15(){
+        PO_LoginView.loginAsAdmin(driver);
+
+        PO_AdminView.tryToDeleteAdmin(driver);
+        driver.navigate().to(URL+"/users/list");
+
+        List<WebElement> users = PO_AdminView.getUsersList(driver);
+
+        for (WebElement user: users) {
+            String emailUser = user.getAttribute("value");
+            Assertions.assertNotEquals(emailUser, "admin@email.com");
+        }
+
+        PO_LoginView.logout(driver);
+        // Comprobar que no hemos sido borrados
+        PO_LoginView.loginAsAdmin(driver);
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba16] Ir al formulario de alta de oferta, rellenarla con datos válidos y pulsar el botón Submit.
+     * Comprobar que la oferta sale en el listado de ofertas de dicho usuario.
+     */
+    @Test
+    @Order(16)
+    void PR16(){
+        PO_LoginView.login(driver, "user11@email.com", "user11", "Lista de ofertas propias");
+
+        PO_OwnOffersView.clickAddOfferOption(driver);
+        //Ahora vamos a rellenar la oferta.
+        String checkText = "Oferta nueva 1";
+        PO_AddOfferView.fillFormAddOffer(driver, checkText, "testsBorrar", "100");
+        // Ir a la última página
+        for (int i = 2; i < 4; i++) {
+            PO_AdminView.checkElementBy(driver, "id", "pl-" + i).get(0).click();
+        }
+        //Comprobamos que aparece la oferta en la página
+        List<WebElement> elements = PO_View.checkElementBy(driver, "text", checkText);
+        Assertions.assertEquals(checkText, elements.get(0).getText());
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba17] Ir al formulario de alta de oferta, rellenarla con datos inválidos (campo título vacío y precio
+     * en negativo) y pulsar el botón Submit. Comprobar que se muestra el mensaje de campo inválido.
+     */
+    @Test
+    @Order(17)
+    void PR17(){
+        PO_LoginView.login(driver, "user11@email.com", "user11", "Lista de ofertas propias");
+
+        PO_OwnOffersView.clickAddOfferOption(driver);
+        PO_AddOfferView.fillFormAddOffer(driver, "  ", "testsBorrar", "-100");
+        String checkText = "Se ha producido un error al añadir la oferta, título vacío";
+        List<WebElement> result = PO_AddOfferView.checkElementBy(driver, "text", checkText);
+        Assertions.assertEquals(checkText , result.get(0).getText());
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba18] Mostrar el listado de ofertas para dicho usuario y comprobar que se muestran todas las que
+     * existen para este usuario.
+     */
+    @Test
+    @Order(18)
+    void PR18(){
+        PO_LoginView.login(driver, "user12@email.com", "user12", "Lista de ofertas propias");
+
+        Assertions.assertEquals(5, PO_OwnOffersView.getOffersList(driver).size());
+        PO_OwnOffersView.checkElementBy(driver, "id", "pl-2").get(0).click();
+        Assertions.assertEquals(5, PO_OwnOffersView.getOffersList(driver).size());
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba19] Ir a la lista de ofertas, borrar la primera oferta de la lista, comprobar que la lista se actualiza
+     * y que la oferta desaparece.
+     */
+    @Test
+    @Order(19)
+    void PR19(){
+        PO_LoginView.login(driver, "user12@email.com", "user12", "Lista de ofertas propias");
+
+        WebElement offer = PO_OwnOffersView.getOffersList(driver).get(0);
+        String titleOfferToDelete = offer.findElements(By.tagName("td")).get(0).getText();
+        offer.findElement(By.className("offer-delete")).click();
+
+        offer = PO_OwnOffersView.getOffersList(driver).get(0);
+        String titleFirstOfferAfterDeletion = offer.findElements(By.tagName("td")).get(0).getText();
+        Assertions.assertNotEquals(titleOfferToDelete, titleFirstOfferAfterDeletion);
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba20] Ir a la lista de ofertas, borrar la última oferta de la lista, comprobar que la lista se actualiza
+     * y que la oferta desaparece.
+     */
+    @Test
+    @Order(20)
+    void PR20(){
+        PO_LoginView.login(driver, "user13@email.com", "user13", "Lista de ofertas propias");
+
+        PO_OwnOffersView.goToLastPage(driver);
+        List<WebElement> offers = PO_OwnOffersView.getOffersList(driver);
+        WebElement offer = offers.get(offers.size()-1);
+        String titleOfferToDelete = offer.findElements(By.tagName("td")).get(0).getText();
+        offer.findElement(By.className("offer-delete")).click();
+
+        PO_OwnOffersView.goToLastPage(driver);
+        offers = PO_OwnOffersView.getOffersList(driver);
+        offer = offers.get(offers.size()-1);
+        String titleFirstOfferAfterDeletion = offer.findElements(By.tagName("td")).get(0).getText();
+        Assertions.assertNotEquals(titleOfferToDelete, titleFirstOfferAfterDeletion);
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba21] Ir a la lista de ofertas, borrar una oferta de otro usuario, comprobar que la oferta no se
+     * borra.
+     */
+    @Test
+    @Order(21)
+    void PR21(){
+        PO_LoginView.login(driver, "user12@email.com", "user12", "Lista de ofertas propias");
+
+        // Borrar oferta de otro usuario, pero no salen en la lista de ofertas propias
+        Assertions.fail("Prueba no implementada");
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba22] Ir a la lista de ofertas, borrar una oferta propia que ha sido vendida, comprobar que la
+     * oferta no se borra.
+     */
+    @Test
+    @Order(22)
+    void PR22(){
+        PO_LoginView.login(driver, "user14@email.com", "user14", "Lista de ofertas propias");
+
+        WebElement offer = PO_OwnOffersView.getOffersList(driver).get(0);
+        String titleOfferToDelete = offer.findElements(By.tagName("td")).get(0).getText();
+        offer.findElement(By.className("offer-delete")).click();
+
+        offer = PO_OwnOffersView.getOffersList(driver).get(0);
+        String titleFirstOfferAfterDeletion = offer.findElements(By.tagName("td")).get(0).getText();
+        Assertions.assertEquals(titleOfferToDelete, titleFirstOfferAfterDeletion);
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba23] Hacer una búsqueda con el campo vacío y comprobar que se muestra la página que
+     * corresponde con el listado de las ofertas existentes en el sistema
+     */
+    @Test
+    @Order(23)
+    void PR23(){
+        PO_LoginView.login(driver, "user14@email.com", "user14", "Lista de ofertas propias");
+        PO_OwnOffersView.clickAllOffersOption(driver);
+        PO_AllOffersView.writeIntoSearchBar(driver, "");
+
+        // Comprobamos que salen todas las ofertas del sistema
+        List<WebElement> tableRows = PO_AllOffersView.getOffersList(driver);
+        Assertions.assertEquals(5, tableRows.size());
+
+        // Ir a la última página
+        for (int i = 2; i < 23; i++) {
+            PO_AllOffersView.checkElementBy(driver, "id", "pl-" + i).get(0).click();
+        }
+
+        // Estamos en la última página
+        tableRows = PO_AllOffersView.getOffersList(driver);
+
+        Assertions.assertEquals(4, tableRows.size());
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba24] Hacer una búsqueda escribiendo en el campo un texto que no exista y comprobar que se
+     * muestra la página que corresponde, con la lista de ofertas vacía.
+     */
+    @Test
+    @Order(24)
+    void PR24(){
+        PO_LoginView.login(driver, "user14@email.com", "user14", "Lista de ofertas propias");
+
+        PO_OwnOffersView.clickAllOffersOption(driver);
+        PO_AllOffersView.writeIntoSearchBar(driver, "ofertaquenoexiste");
+        WebElement tableBody = PO_AllOffersView.checkElementBy(driver, "free", "//tbody").get(1);
+        List<WebElement> tableRows = tableBody.findElements(By.tagName("tr"));
+        Assertions.assertEquals(0, tableRows.size());
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba25] Hacer una búsqueda escribiendo en el campo un texto en minúscula o mayúscula y
+     * comprobar que se muestra la página que corresponde, con la lista de ofertas que contengan dicho
+     * texto, independientemente que el título esté almacenado en minúsculas o mayúscula.
+     */
+    @Test
+    @Order(25)
+    void PR25(){
+        PO_LoginView.login(driver, "user14@email.com", "user14", "Lista de ofertas propias");
+
+        PO_OwnOffersView.clickAllOffersOption(driver);
+        PO_AllOffersView.writeIntoSearchBar(driver, "OFERTA-USER09-N1");
+        List<WebElement> tableRows = PO_AllOffersView.getOffersList(driver);
+        Assertions.assertEquals(2, tableRows.size());
+        WebElement tableRow = tableRows.get(0);
+        String title = tableRow.findElements(By.tagName("td")).get(0).getText();
+        Assertions.assertEquals("Oferta-user09-n1", title);
+        WebElement tableRow2 = tableRows.get(1);
+        String title2 = tableRow2.findElements(By.tagName("td")).get(0).getText();
+        Assertions.assertEquals("Oferta-user09-n10", title2);
 
         PO_LoginView.logout(driver);
     }
