@@ -20,8 +20,8 @@ import java.util.List;
 class Sdi2223Entrega2TestApplicationTests {
     // Windows
     static String PathFirefox = "C:\\Program Files\\Mozilla Firefox\\firefox.exe";
-    //static String Geckodriver = "C:\\Users\\mines\\Desktop\\nodejs\\geckodriver-v0.30.0-win64.exe";
-    static String Geckodriver = "C:\\Users\\uo277369\\Desktop\\geckodriver-v0.30.0-win64.exe";
+    static String Geckodriver = "C:\\Users\\mines\\Desktop\\nodejs\\geckodriver-v0.30.0-win64.exe";
+    //static String Geckodriver = "C:\\Users\\uo277369\\Desktop\\geckodriver-v0.30.0-win64.exe";
     // MACOSX
     //static String PathFirefox = "/Applications/Firefox.app/Contents/MacOS/firefox-bin";
     //static String Geckodriver = "/Users/USUARIO/selenium/geckodriver-v0.30.0-macos";
@@ -526,20 +526,64 @@ class Sdi2223Entrega2TestApplicationTests {
     void PR26(){
         PO_LoginView.login(driver, "user14@email.com", "user14", "Lista de ofertas propias");
 
-        int amountBefore = getMyAmount();
+        int amountBefore = PO_OwnOffersView.getMyAmount(driver);
         PO_OwnOffersView.clickAllOffersOption(driver);
         PO_AllOffersView.writeIntoSearchBar(driver, "OFERTA-USER09-N1");
         int price = PO_AllOffersView.buyFirstOffer(driver);
-        int amountAfter = getMyAmount();
+        int amountAfter = PO_OwnOffersView.getMyAmount(driver);
         Assertions.assertEquals(amountAfter, amountBefore - price);
 
         PO_LoginView.logout(driver);
     }
 
-    private int getMyAmount() {
-        String myAmount = PO_OwnOffersView.checkElementBy(driver, "id", "myAmount").get(0).getText();
-        String myAmountOnlyNumber = myAmount.substring(0, myAmount.length()-2);
-        return Integer.parseInt(myAmountOnlyNumber);
+    /**
+     * [Prueba27] Sobre una búsqueda determinada (a elección de desarrollador), comprar una oferta que
+     * deja un saldo 0 en el contador del comprobador. Y comprobar que el contador se actualiza
+     * correctamente en la vista del comprador.
+     */
+    @Test
+    @Order(27)
+    void PR27(){
+        PO_LoginView.login(driver, "user09@email.com", "user09", "Lista de ofertas propias");
+
+        int amountBefore = PO_OwnOffersView.getMyAmount(driver);
+        PO_OwnOffersView.clickAllOffersOption(driver);
+        PO_AllOffersView.writeIntoSearchBar(driver, "OFERTA-USER14-N10");
+        int price = PO_AllOffersView.buyFirstOffer(driver);
+        int amountAfter = PO_OwnOffersView.getMyAmount(driver);
+        Assertions.assertEquals(amountAfter, amountBefore - price);
+        Assertions.assertEquals(amountAfter, 0);
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba28] Sobre una búsqueda determinada (a elección de desarrollador), intentar comprar una oferta
+     * que esté por encima de saldo disponible del comprador. Y comprobar que se muestra el mensaje
+     * de saldo no suficiente.
+     */
+    @Test
+    @Order(28)
+    void PR28(){
+        PO_LoginView.login(driver, "user08@email.com", "user08", "Lista de ofertas propias");
+
+        PO_OwnOffersView.clickAllOffersOption(driver);
+        // Primero hacemos una compra que nos deje por debajo de 60
+        PO_AllOffersView.writeIntoSearchBar(driver, "Oferta-USER14-N5");
+        PO_AllOffersView.buyFirstOffer(driver);
+        int amountBefore = PO_OwnOffersView.getMyAmount(driver);
+        // Compramos una oferta de 60
+        PO_OwnOffersView.clickAllOffersOption(driver);
+        PO_AllOffersView.writeIntoSearchBar(driver, "OFERTA-USER14-N6");
+        PO_AllOffersView.buyFirstOffer(driver);
+        int amountAfter = PO_OwnOffersView.getMyAmount(driver);
+        String checkText = "Error comprar la oferta: dinero insuficiente";
+        List<WebElement> elements = PO_OwnOffersView.checkElementBy(driver, "text", checkText);
+        Assertions.assertEquals(1, elements.size());
+        Assertions.assertEquals(checkText, elements.get(0).getText());
+        Assertions.assertEquals(amountAfter, amountBefore);
+
+        PO_LoginView.logout(driver);
     }
 
     /* Ejemplos de pruebas de llamada a una API-REST */
