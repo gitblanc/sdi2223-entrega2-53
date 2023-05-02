@@ -7,7 +7,7 @@
             <th>Detalle</th>
             <th>Precio €</th>
             <th>Fecha de publicación</th>
-            <th>Email del vendedor</th>
+            <th>Email de vendedor</th>
             <th class="col-md-1"></th>
         </tr>
         </thead>
@@ -56,36 +56,10 @@
                 "</td>" +
                 "<td>" +
                 offers[i].seller +
-                "</td>" +
-                "<td>" +
-                "<a onclick=sendMessage('" + offers[i]._id + "')>Conversación</a><br>" +
-                "</td>" +
-                "</tr>"
+                "</td>"
             );
         }
     }
-
-    function sendMessage() {
-        $.ajax({
-            url: URLbase + "/messages",
-            type: "POST",
-            data: {
-                sender: userEmail,
-                text: $("#text-add").val(),
-            },
-            dataType: 'json',
-            headers: {"token": token},
-            success: function (response) {
-                console.log(response); // <-- Prueba
-                $("#main-container").load("widget-login.html");
-            },
-            error: function () {
-                $("#main-container").load("widget-login.html");
-            }
-        });
-    }
-
-
 
     loadOffers();
 </script>
