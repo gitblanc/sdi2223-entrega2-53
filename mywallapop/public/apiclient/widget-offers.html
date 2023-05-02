@@ -38,7 +38,7 @@
 
     function updateOffersTable(offers) {
         $("#offersTableBody").empty(); // Vaciar la tabla
-        for (i = 0; i < offers.length; i++) {
+        for (let i = 0; i < offers.length; i++) {
             $("#offersTableBody").append(
                 "<tr>" +
                 "<td id='" + offers[i].title + "'>" + offers[i].title + "</td>" +
@@ -62,11 +62,14 @@
                 "token": token
             },
             success: function (response) {
-                messages = response;//we store the chat content (messages and )
+                messages = response.messages;//we store the chat content (messages and )
+                chatId = response.chat;
+                offerOfChat = offer;
                 $("#main-container").load("./widget-chat.html");
             },
             error: function (error) {
                 console.log(error);
+                $("#main-container").load("./widget-offers.html");
             }
         });
 

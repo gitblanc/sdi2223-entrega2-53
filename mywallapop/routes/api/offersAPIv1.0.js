@@ -106,7 +106,8 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
     /**
      * Petición POST que añadirá un mensjae  ala base de datos. Para añadirlo la oferta tiene que existir
      */
-    app.post("/api/v1.0/chat/{:offerId}/{:chatId}", function(req, res) {
+    app.post("/api/v1.0/chat/:offerId/:chatId", function (req, res) {
+        console.log("ENTRA 1");
         try {
             const dateAux = new Date();
 
@@ -122,6 +123,7 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
             }
 
             let offerId = ObjectId(req.params.id);
+
             let options = {};
 
             let isValid = true;
@@ -130,16 +132,20 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
                 isValid = false;
             }
 
-            if (message.text === null || message.text === ""){
+            if (message.text === null || message.text === "") {
                 isValid = false;
             }
 
-            if(isValid) {
-                offersRepository.findOffer({_id:offerId}, {}).then(offer => {
-                    if(offer != null) {
-                        if(offer.seller != message.sender) {
+            console.log("ENTRA 2");
+
+            if (isValid) {
+                offersRepository.findOffer({_id: offerId}, {}).then(offer => {
+                    console.log("ENTRA 3");
+                    if (offer != null) {
+                        if (offer.seller !== message.sender) {
                             let filter = {offer: offerId, user: message.sender};
                             chatsRepository.findChat(filter, {}).then(chat => {
+                                console.log("ENTRA 4");
                                 if (chat === null || typeof chat === "undefined") {
                                     // Crearlo
                                     chat = {
@@ -151,33 +157,34 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
                                     })
 
                                     messagesRepository.insertMessage(message, function (messageId) {
-                                        if(messageId == null) {
+                                        if (messageId == null) {
                                             res.send("Se ha producido un error al añadir el mensaje")
                                         } else {
                                             res.status(201);
-                                            res.json( {
+                                            res.json({
                                                 message: "Mansaje añadido correctamente.",
                                                 _id: messageId
                                             })
                                         }
                                     })
                                 } else {
-                                        message.chatId = chat._id;
-                                        messagesRepository.insertMessage(message, function (messageId) {
-                                            if(messageId == null) {
-                                                res.send("Se ha producido un error al añadir el mensaje")
-                                            } else {
-                                                res.status(201);
-                                                res.json( {
-                                                    message: "Mansaje añadido correctamente.",
-                                                    _id: messageId
+                                    message.chatId = chat._id;
+                                    console.log("Mensaje: " + message);
+                                    messagesRepository.insertMessage(message, function (messageId) {
+                                        if (messageId == null) {
+                                            res.send("Se ha producido un error al añadir el mensaje")
+                                        } else {
+                                            res.status(201);
+                                            res.json({
+                                                message: "Mansaje añadido correctamente.",
+                                                _id: messageId
                                             })
-                                            }
-                                        })
+                                        }
+                                    })
                                 }
                             })
 
-                        }else {
+                        } else {
                             res.status(500);
                             res.send("No te puedes mandar un mensaje a ti mismo.")
                         }
@@ -208,7 +215,7 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
         let otherUser = req.query.otherUser;
         let activeUser = res.user;
         // Busco oferta para ver el propietario
-        offersRepository.findOffer({_id:offerId}, {}).then(offer => {
+        offersRepository.findOffer({_id: offerId}, {}).then(offer => {
             let userClient;
             // si el usuario que solicita el chat es el vendedor
             if (activeUser === offer.seller) {
@@ -251,7 +258,7 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
         messagesRepository.getMessages(filterMessages, {}).then(messages => {
 
             res.status(200);
-            res.json({messages: messages});
+            res.json({chat: chatId, messages: messages});
 
         }).catch(error => {
             res.status(500);

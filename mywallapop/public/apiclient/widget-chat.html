@@ -13,9 +13,66 @@
     </table>
 
     <h2>Send message</h2>
-    <form id="messageForm">
+    <form id="messageForm" action="">
         <label for="message">Mensaje:</label>
         <input type="text" id="message" name="message" placeholder="Escribe aquí tu mensaje..."><br>
         <button type="submit">Enviar</button>
     </form>
 </div>
+<script>
+    // Select the "Enviar" button using its ID and add an event listener for the "click" event
+    document.getElementById("messageForm").addEventListener("submit", function (event) {
+        event.preventDefault(); // Prevent the form from submitting and reloading the page
+
+        // Get the value of the message input field
+        const message = document.getElementById("message").value;
+
+        if (message != null && message !== "") {
+            // Call the addMessage function with the message as an argument
+            addMessage(message);
+
+            // Clear the message input field
+            document.getElementById("message").value = "";
+        }
+    });
+
+    function loadMessages() {
+        for (let i = 0; i < messages.length; i++) {
+            $("#chatsTableBody").append(
+                "<tr>" +
+                "<td>" + messages[i] + "</td>" +
+                "<td>" + Date.now().toFixed() + "</td>" +
+                "</tr>"
+            );
+        }
+    }
+
+    function addMessage(message) {
+        console.log(message);
+        console.log(chatId);
+        console.log(offerOfChat);
+
+        const url = `${URLbase}/chat/${offerOfChat._id}/${chatId}`;
+        const data = {user: message.sender, text: message.text};
+        const headers = {token: token};
+
+        $.ajax({
+            url,
+            type: "POST",
+            data: JSON.stringify(data),
+            dataType: "json",
+            contentType: "application/json",
+            headers,
+            success: function (response) {
+                console.log(response);
+                $("#main-container").load("widget-chat.html");
+            },
+            error: function (error) {
+                $("#main-container").load("widget-offers.html");
+            },
+        });
+    }
+
+
+    loadMessages();
+</script>
