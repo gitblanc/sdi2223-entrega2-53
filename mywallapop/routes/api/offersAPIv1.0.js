@@ -67,6 +67,18 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
         });
     });
 
+    app.get("/api/v1.0/offers/:offerId", function (req, res) {
+        let filter = {_id: new ObjectId(req.params.offerId)};
+        let options = {};
+        offersRepository.getOffers(filter, options).then(offer => {
+            res.status(200);
+            res.send({offer: offer})
+        }).catch(error => {
+            res.status(500);
+            res.json({error: "Se ha producido un error al recuperar la oferta."})
+        });
+    });
+
     /**
      * Devuelve el listado de conversaciones del usuario identificado
      */
@@ -81,7 +93,7 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
             offersRepository.getOffers({seller: activeUser}, {}).then(offers => {
                 let offersIds = [];
                 for (let i = 0; i < offers.length; i++) {
-                    offersIds.push(offers[i]._id);
+                    offersIds.push(offers[i]);
                 }
                 // obtener conversaciones cuya offer pertenece a la lista
                 chatsRepository.getChats({"offer": {$in: offersIds}}, {}).then(chatsSeller => {
