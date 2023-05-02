@@ -37,7 +37,7 @@
 
         {% if email != null %}
           <li style="color:white ; padding:1em">{{email}}</li>
-          <li style="color:white ; padding:1em">{{amount}} €</li>
+          <li id="myAmount" style="color:white ; padding:1em">{{amount}} €</li>
           <li><a href="/users/logout"><span class="glyphicon glyphicon-user"></span> Desconectarse</a></li>
         {% else %}
           <li><a href="/users/signup"><span class="glyphicon glyphicon-user"></span> Registrate</a></li>

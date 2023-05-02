@@ -5,6 +5,7 @@ import com.uniovi.sdi2223entrega2test.n.util.SeleniumUtils;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
+import org.codehaus.groovy.runtime.StringGroovyMethods;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.*;
 import org.openqa.selenium.By;
@@ -19,7 +20,8 @@ import java.util.List;
 class Sdi2223Entrega2TestApplicationTests {
     // Windows
     static String PathFirefox = "C:\\Program Files\\Mozilla Firefox\\firefox.exe";
-    static String Geckodriver = "C:\\Users\\mines\\Desktop\\nodejs\\geckodriver-v0.30.0-win64.exe";
+    //static String Geckodriver = "C:\\Users\\mines\\Desktop\\nodejs\\geckodriver-v0.30.0-win64.exe";
+    static String Geckodriver = "C:\\Users\\uo277369\\Desktop\\geckodriver-v0.30.0-win64.exe";
     // MACOSX
     //static String PathFirefox = "/Applications/Firefox.app/Contents/MacOS/firefox-bin";
     //static String Geckodriver = "/Users/USUARIO/selenium/geckodriver-v0.30.0-macos";
@@ -408,9 +410,19 @@ class Sdi2223Entrega2TestApplicationTests {
     void PR21(){
         PO_LoginView.login(driver, "user12@email.com", "user12", "Lista de ofertas propias");
 
-        // Borrar oferta de otro usuario, pero no salen en la lista de ofertas propias
-        Assertions.fail("Prueba no implementada");
-
+        // Ir a la lista de todas las ofertas
+        PO_OwnOffersView.clickAllOffersOption(driver);
+        // Pillar el id de una oferta de otro usuario
+        String idOffer = PO_AllOffersView.getFirstOfferId(driver);
+        // Invocar el delete con ese id
+        driver.navigate().to(URL+"/offers/delete/"+idOffer);
+        // Comprobar el mensaje de error
+        String checkText = "Acceso denegado";
+        PO_OwnOffersView.checkElementBy(driver, "text", checkText);
+        // Comprobar que no se ha borrado
+        PO_OwnOffersView.clickAllOffersOption(driver);
+        String idOfferAfterDeletion = PO_AllOffersView.getFirstOfferId(driver);
+        Assertions.assertEquals(idOffer, idOfferAfterDeletion);
         PO_LoginView.logout(driver);
     }
 
@@ -502,6 +514,32 @@ class Sdi2223Entrega2TestApplicationTests {
         Assertions.assertEquals("Oferta-user09-n10", title2);
 
         PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba26] Sobre una búsqueda determinada (a elección de desarrollador), comprar una oferta que
+     * deja un saldo positivo en el contador del comprobador. Y comprobar que el contador se actualiza
+     * correctamente en la vista del comprador.
+     */
+    @Test
+    @Order(26)
+    void PR26(){
+        PO_LoginView.login(driver, "user14@email.com", "user14", "Lista de ofertas propias");
+
+        int amountBefore = getMyAmount();
+        PO_OwnOffersView.clickAllOffersOption(driver);
+        PO_AllOffersView.writeIntoSearchBar(driver, "OFERTA-USER09-N1");
+        int price = PO_AllOffersView.buyFirstOffer(driver);
+        int amountAfter = getMyAmount();
+        Assertions.assertEquals(amountAfter, amountBefore - price);
+
+        PO_LoginView.logout(driver);
+    }
+
+    private int getMyAmount() {
+        String myAmount = PO_OwnOffersView.checkElementBy(driver, "id", "myAmount").get(0).getText();
+        String myAmountOnlyNumber = myAmount.substring(0, myAmount.length()-2);
+        return Integer.parseInt(myAmountOnlyNumber);
     }
 
     /* Ejemplos de pruebas de llamada a una API-REST */

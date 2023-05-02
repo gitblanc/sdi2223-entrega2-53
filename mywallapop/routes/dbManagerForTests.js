@@ -6,6 +6,7 @@ module.exports = function (app, offersRepository, usersRepository) {
      */
     app.get('/tests/insert', function (req, res) {
         let users = [];
+        // Estándares
         for (let i = 1; i < 16; i++) {
             let emailNumber = i.toString();
             if (i < 10) {
@@ -24,6 +25,19 @@ module.exports = function (app, offersRepository, usersRepository) {
             }
             users.push(userToSave);
         }
+        // Admin
+        let password = "admin";
+        let securePassword = app.get("crypto").createHmac('sha256', app.get('clave')).update(password).digest('hex');
+        let admin = {
+            email: "admin@email.com",
+            name: "testsBorrar",
+            surname: "testsBorrar",
+            birthdate: "2001-01-01",
+            amount: 100,
+            role: 'Administrador',
+            password: securePassword
+        }
+        users.push(admin);
         usersRepository.insertUsers(users).then(() => {
             let usersI = users;
             // insertar ofertas
