@@ -125,7 +125,7 @@ module.exports = function (app, offersRepository, usersRepository) {
      * publicadas por el usuario logeado
      */
     app.get("/publications", function (req, res) {
-        let numItemsPorPagina = 5;
+        let numItemsPorPagina = 4;
 
         let filter = {seller: req.session.user};
         let page = parseInt(req.query.page);
