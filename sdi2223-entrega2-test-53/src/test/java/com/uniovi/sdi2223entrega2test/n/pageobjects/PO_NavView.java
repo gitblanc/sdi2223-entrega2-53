@@ -36,6 +36,10 @@ public class PO_NavView extends PO_View {
         clickOption(driver, "shop", "text", "Lista de todas las ofertas");
     }
 
+    public static void clickPurchasesOption(WebDriver driver) {
+        clickOption(driver, "purchases", "text", "Mis compras");
+    }
+
     public static int getMyAmount(WebDriver driver) {
         String myAmount = PO_OwnOffersView.checkElementBy(driver, "id", "myAmount").get(0).getText();
         String myAmountOnlyNumber = myAmount.substring(0, myAmount.length()-2);

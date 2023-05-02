@@ -311,7 +311,7 @@ class Sdi2223Entrega2TestApplicationTests {
         PO_OwnOffersView.clickAddOfferOption(driver);
         //Ahora vamos a rellenar la oferta.
         String checkText = "Oferta nueva 1";
-        PO_AddOfferView.fillFormAddOffer(driver, checkText, "testsBorrar", "100");
+        PO_AddOfferView.fillFormAddOffer(driver, checkText, "testsBorrar", "100", false);
         // Ir a la última página
         for (int i = 2; i < 4; i++) {
             PO_AdminView.checkElementBy(driver, "id", "pl-" + i).get(0).click();
@@ -333,7 +333,7 @@ class Sdi2223Entrega2TestApplicationTests {
         PO_LoginView.login(driver, "user11@email.com", "user11", "Lista de ofertas propias");
 
         PO_OwnOffersView.clickAddOfferOption(driver);
-        PO_AddOfferView.fillFormAddOffer(driver, "  ", "testsBorrar", "-100");
+        PO_AddOfferView.fillFormAddOffer(driver, "  ", "testsBorrar", "-100", false);
         String checkText = "Se ha producido un error al añadir la oferta, título vacío";
         List<WebElement> result = PO_AddOfferView.checkElementBy(driver, "text", checkText);
         Assertions.assertEquals(checkText , result.get(0).getText());
@@ -582,6 +582,50 @@ class Sdi2223Entrega2TestApplicationTests {
         Assertions.assertEquals(1, elements.size());
         Assertions.assertEquals(checkText, elements.get(0).getText());
         Assertions.assertEquals(amountAfter, amountBefore);
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba29] Ir a la opción de ofertas compradas del usuario y mostrar la lista. Comprobar que aparecen
+     * las ofertas que deben aparecer
+     */
+    @Test
+    @Order(29)
+    void PR29(){
+        PO_LoginView.login(driver, "user07@email.com", "user07", "Lista de ofertas propias");
+
+        PO_OwnOffersView.clickPurchasesOption(driver);
+        List<WebElement> purchases = PO_OwnOffersView.getOffersList(driver);
+        Assertions.assertEquals(1, purchases.size());
+        WebElement purchase = purchases.get(0);
+        String title = purchase.findElements(By.tagName("td")).get(0).getText();
+        Assertions.assertEquals("Oferta-user14-n1", title);
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba30] Al crear una oferta, marcar dicha oferta como destacada y a continuación comprobar: i)
+     * que aparece en el listado de ofertas destacadas para los usuarios y que el saldo del usuario se
+     * actualiza adecuadamente en la vista del ofertante (comprobar saldo antes y después, que deberá
+     * diferir en 20€).
+     */
+    @Test
+    @Order(30)
+    void PR30(){
+        PO_LoginView.login(driver, "user11@email.com", "user11", "Lista de ofertas propias");
+
+        PO_OwnOffersView.clickAddOfferOption(driver);
+        int amountBefore = PO_OwnOffersView.getMyAmount(driver);
+        //Ahora vamos a rellenar la oferta.
+        String checkText = "Oferta nueva destacada";
+        PO_AddOfferView.fillFormAddOffer(driver, checkText, "testsBorrar", "100", true);
+        int amountAfter = PO_OwnOffersView.getMyAmount(driver);
+        Assertions.assertEquals(amountAfter, amountBefore - 20);
+        PO_OwnOffersView.clickAllOffersOption(driver);
+        String title =PO_AllOffersView.getOffersList(driver).get(0).findElements(By.tagName("td")).get(0).getText();
+        Assertions.assertEquals(title, checkText);
 
         PO_LoginView.logout(driver);
     }
