@@ -210,6 +210,7 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
 
         // Busco oferta para ver el propietario
         offersRepository.findOffer({_id:offerId}, {}).then(offer => {
+            console.log(offerId);
             let userClient;
             // si el usuario que solicita el chat es el vendedor
             if (activeUser === offer.seller) {

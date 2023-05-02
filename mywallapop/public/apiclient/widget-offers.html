@@ -1,5 +1,5 @@
 <div id="widget-offers">
-
+    <h2>Listado de ofertas</h2>
     <table class="table table-hover">
         <thead>
         <tr>
@@ -8,6 +8,7 @@
             <th>Precio €</th>
             <th>Fecha de publicación</th>
             <th>Email de vendedor</th>
+            <th>Conversación</th>
             <th class="col-md-1"></th>
         </tr>
         </thead>
@@ -39,27 +40,37 @@
         $("#offersTableBody").empty(); // Vaciar la tabla
         for (i = 0; i < offers.length; i++) {
             $("#offersTableBody").append(
-                "<tr id=" +
-                offers[i]._id +
-                ">" +
-                "<td>" +
-                offers[i].title +
-                "</td>" +
-                "<td>" +
-                offers[i].description +
-                "</td>" +
-                "<td>" +
-                offers[i].price +
-                "</td>" +
-                "<td>" +
-                offers[i].date +
-                "</td>" +
-                "<td>" +
-                offers[i].seller +
-                "</td>"
+                "<tr>" +
+                "<td id='" + offers[i].title + "'>" + offers[i].title + "</td>" +
+                "<td>" + offers[i].description + "</td>" +
+                "<td>" + offers[i].price + "</td>" +
+                "<td>" + offers[i].date + "</td>" +
+                "<td>" + offers[i].seller + "</td>" +
+                "<td><button id='" + offers[i]._id + "' onclick='openConversation(" + JSON.stringify(offers[i]) + ")'>" + "Chat" + "</button></td>" +
+                "</tr>"
             );
         }
     }
 
+    function openConversation(offer){
+        $.ajax({
+            url: URLbase + "/offers/chats/byoffer/" + offer._id + "?otherUser=" + offer.seller,
+            type: "GET",
+            success: function success(response) {
+                //token = response.token;
+                console.log(response)
+                //$("#main-container").load("./widget-chat.html");
+            },
+            error: function (error) {
+                $("#div-errors").remove();
+                $("#widget-login")
+                    .prepend("<div id='div-errors' class='alert alert-danger'>Usuario o contraseña incorrectos</div>");
+
+
+            }
+        });
+    }
+
     loadOffers();
+
 </script>
