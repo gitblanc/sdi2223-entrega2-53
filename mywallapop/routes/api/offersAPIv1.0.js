@@ -106,7 +106,7 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
     /**
      * Petición POST que añadirá un mensjae  ala base de datos. Para añadirlo la oferta tiene que existir
      */
-    app.post("/api/v1.0/messages", function(req, res) {
+    app.post("/api/v1.0/chat/{:offerId}/{:chatId}", function(req, res) {
         try {
             const dateAux = new Date();
 
@@ -117,7 +117,8 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
                 text: req.body.text,
                 date: dateAux.getDate() + "/" + dateAux.getMonth() + "/" + dateAux.getFullYear(),
                 hour: dateAux.getHours() + ":" + dateAux.getMinutes() + ":" + dateAux.getSeconds(),
-                read: false
+                read: false,
+                chatId: null
             }
 
             let offerId = ObjectId(req.params.id);
@@ -137,18 +138,46 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
                 offersRepository.findOffer({_id:offerId}, {}).then(offer => {
                     if(offer != null) {
                         if(offer.seller != message.sender) {
-                            messagesRepository.insertMessage(message, function (messageId) {
-                                if(messageId == null) {
-                                    res.send("Se ha producido un error al añadir el mensaje")
-                                } else {
-                                    res.status(201);
-                                    res.json( {
-                                        message: "Mansaje añadido correctamente.",
-                                        _id: messageId
+                            let filter = {offer: offerId, user: message.sender};
+                            chatsRepository.findChat(filter, {}).then(chat => {
+                                if (chat === null || typeof chat === "undefined") {
+                                    // Crearlo
+                                    chat = {
+                                        offer: offerId,
+                                        user: message.sender
+                                    }
+                                    chatsRepository.insertChat(chat).then(insertedId => {
+                                        message.chatId = chat._id;
                                     })
+
+                                    messagesRepository.insertMessage(message, function (messageId) {
+                                        if(messageId == null) {
+                                            res.send("Se ha producido un error al añadir el mensaje")
+                                        } else {
+                                            res.status(201);
+                                            res.json( {
+                                                message: "Mansaje añadido correctamente.",
+                                                _id: messageId
+                                            })
+                                        }
+                                    })
+                                } else {
+                                        message.chatId = chat._id;
+                                        messagesRepository.insertMessage(message, function (messageId) {
+                                            if(messageId == null) {
+                                                res.send("Se ha producido un error al añadir el mensaje")
+                                            } else {
+                                                res.status(201);
+                                                res.json( {
+                                                    message: "Mansaje añadido correctamente.",
+                                                    _id: messageId
+                                            })
+                                            }
+                                        })
                                 }
                             })
-                        } else {
+
+                        }else {
                             res.status(500);
                             res.send("No te puedes mandar un mensaje a ti mismo.")
                         }
