@@ -57,13 +57,32 @@
                 "<td>" +
                 offers[i].seller +
                 "</td>" +
-                "</tr>" +
+                "<td>" +
+                "<a onclick=sendMessage('" + offers[i]._id + "')>Conversación</a><br>" +
+                "</td>" +
+                "</tr>"
             );
         }
     }
 
     function sendMessage() {
-
+        $.ajax({
+            url: URLbase + "/messages",
+            type: "POST",
+            data: {
+                sender: userEmail,
+                text: $("#text-add").val(),
+            },
+            dataType: 'json',
+            headers: {"token": token},
+            success: function (response) {
+                console.log(response); // <-- Prueba
+                $("#main-container").load("widget-login.html");
+            },
+            error: function () {
+                $("#main-container").load("widget-login.html");
+            }
+        });
     }
 
 

@@ -110,6 +110,8 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
         try {
             const dateAux = new Date();
 
+            //el mensaje tiene que tener el id del chat al que pertenece
+            //busco el chat con el id de la oferta y el id del usuario y si lo encuntra lo inserta en ese chat y sini pues creara otro
             let message = {
                 sender: req.body.user,
                 text: req.body.text,
