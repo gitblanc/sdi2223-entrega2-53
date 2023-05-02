@@ -52,14 +52,20 @@
         }
     }
 
-    function openConversation(offer){
+    function openConversation(offer) {
         $.ajax({
-            url: '/api/v1.0/offers/chats/byoffer/' + offer._id + '?otherUser=' + offer.seller,
+            url: '/api/v1.0/offers/chats/byoffer/' + offer._id,
             type: 'GET',
-            success: function(response) {
-                console.log(response);
+            data: {},
+            dataType: 'json',
+            headers: {
+                "token": token
             },
-            error: function(error) {
+            success: function (response) {
+                messages = response;//we store the chat content (messages and )
+                $("#main-container").load("./widget-chat.html");
+            },
+            error: function (error) {
                 console.log(error);
             }
         });

@@ -207,7 +207,6 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
         let offerId = ObjectId(req.params.offerId);
         let otherUser = req.query.otherUser;
         let activeUser = res.user;
-        console.log(offerId);
         // Busco oferta para ver el propietario
         offersRepository.findOffer({_id:offerId}, {}).then(offer => {
             let userClient;
