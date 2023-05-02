@@ -54,21 +54,16 @@
 
     function openConversation(offer){
         $.ajax({
-            url: URLbase + "/offers/chats/byoffer/" + offer._id + "?otherUser=" + offer.seller,
-            type: "GET",
-            success: function success(response) {
-                //token = response.token;
-                console.log(response)
-                //$("#main-container").load("./widget-chat.html");
+            url: '/api/v1.0/offers/chats/byoffer/' + offer._id + '?otherUser=' + offer.seller,
+            type: 'GET',
+            success: function(response) {
+                console.log(response);
             },
-            error: function (error) {
-                $("#div-errors").remove();
-                $("#widget-login")
-                    .prepend("<div id='div-errors' class='alert alert-danger'>Usuario o contraseña incorrectos</div>");
-
-
+            error: function(error) {
+                console.log(error);
             }
         });
+
     }
 
     loadOffers();
