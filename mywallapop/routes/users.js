@@ -1,7 +1,9 @@
 const {ObjectId} = require("mongodb");
 const logsRepository = require("../repositories/logsRepository");
 const appLogger = require("../logger");
-module.exports = function (app, usersRepository, offersRepository) {
+const chatsRepository = require("../repositories/chatsRepository");
+const messagesRepository = require("../repositories/messagesRepository");
+module.exports = function (app, usersRepository, offersRepository, chatsRepository,messagesRepository) {
     app.get('/users', function (req, res) {
         appLogger.createNewLog("Acceso a la lista de usuarios", "PET");
         res.send('lista de usuarios');
@@ -216,32 +218,84 @@ module.exports = function (app, usersRepository, offersRepository) {
     });
     app.post('/users/delete', function (req, res) {
         let usersToDelete = req.body.check;
+
+        //En caso de que no se seleccione ningún usuario
         if (typeof usersToDelete === 'undefined') {
             appLogger.createNewLog("Error al borrar usuarios, no se ha seleccionado ningún usuario", "PET-ERR");
             res.redirect("/users/list");
+
+        //En caso de que se seleccione solo un usuario
         } else if (!Array.isArray(usersToDelete)) {
             usersToDelete = usersToDelete.substring(0, usersToDelete.length - 1);
             let filter = {email: usersToDelete};
             if (usersToDelete !== 'admin@email.com') {
+
+                //Elimino el usuario
                 usersRepository.deleteUser(filter, {}).then(result => {
                     if (result === null || result.deletedCount === 0) {
                         appLogger.createNewLog("Error al borrar el usuario " + usersToDelete, "PET-ERR");
                         res.send("No se ha podido eliminar el usuario");
                         return null;
                     } else {
-                        let filterOffers = {seller: usersToDelete};
-                        offersRepository.deleteOffers(filterOffers,{}).then(result =>{
-                            let filterPurchases = {user: usersToDelete};
-                            offersRepository.deletePurchases(filterPurchases,{}).then(result =>{
-                                appLogger.createNewLog("El usuario " + usersToDelete + " ha sido borrado correctamente", "PET");
-                                res.redirect("/users/list");
+                        let allOffersFromUser = {seller: usersToDelete};
+
+                        //Obtengo las ofertas del usuario
+                        offersRepository.getOffers(allOffersFromUser,{}).then(result => {
+                            let offerids = [];
+                            for(let i = 0; i < result.length; i++ ){
+                                offerids.push( result[i].id);
+                            }
+                            let filterToChats = {offer: {$in: offerids}};
+
+                            //Obtengo los chats de dichas ofertas
+                            chatsRepository.getChats(filterToChats,{}).then(resultChats => {
+                                let chatids = [];
+                                for(let i = 0; i < resultChats.length; i++ ){
+                                    chatids.push( resultChats[i].id);
+                                }
+                                let filterToMessages = {chat: {$in: chatids}};
+
+                                //Borro los mensajes de esos chats
+                                messagesRepository.deleteMessages(filterToMessages,{}).then(resultMessages => {
+                                    //Borro los chats
+                                    chatsRepository.deleteChats(filterToChats,{}).then(resultChatsDeleted => {
+
+                                        let filterOffers = {seller: usersToDelete};
+                                        //Borro las ofertas
+                                        offersRepository.deleteOffers(filterOffers,{}).then(result =>{
+                                            let filterPurchases = {user: usersToDelete};
+                                            //Borro las compras
+                                            offersRepository.deletePurchases(filterPurchases,{}).then(result =>{
+                                                appLogger.createNewLog("El usuario " + usersToDelete + " ha sido borrado correctamente", "PET");
+                                                res.redirect("/users/list");
+                                            }).catch(error => {
+                                                appLogger.createNewLog("Error al borrar las compras del usuario " + usersToDelete, "PET-ERR");
+                                                res.send("Se ha producido un error al intentar eliminar las compras del usuario: " + error)
+                                            });
+                                        }).catch(error => {
+                                            appLogger.createNewLog("Error al borrar las ofertas del usuario " + usersToDelete, "PET-ERR");
+                                            res.send("Se ha producido un error al intentar eliminar las ofertas del usuario: " + error)
+                                        });
+
+                                    }).catch(error => {
+                                        appLogger.createNewLog("Se ha producido un error al borrar los chats de un usuario", "PET-ERR");
+                                        res.send("Se ha producido un error al borrar los chats de un usuario" + error)
+                                    });
+
+
+                                }).catch(error => {
+                                    appLogger.createNewLog("Se ha producido un error al borrar los mensajes de un usuario", "PET-ERR");
+                                    res.send("Se ha producido un error al borrar los mensajes de un usuario" + error)
+                                });
+
                             }).catch(error => {
-                                appLogger.createNewLog("Error al borrar las compras del usuario " + usersToDelete, "PET-ERR");
-                                res.send("Se ha producido un error al intentar eliminar las compras del usuario: " + error)
+                                appLogger.createNewLog("Se ha producido un error al listar los chats de una oferta", "PET-ERR");
+                                res.send("Se ha producido un error al listar los chats" + error)
                             });
+
                         }).catch(error => {
-                            appLogger.createNewLog("Error al borrar las ofertas del usuario " + usersToDelete, "PET-ERR");
-                            res.send("Se ha producido un error al intentar eliminar las ofertas del usuario: " + error)
+                            appLogger.createNewLog("Se ha producido un error al listar las ofertas del usuario " + usersToDelete, "PET-ERR");
+                            res.send("Se ha producido un error al listar las ofertas del usuario " + error)
                         });
                     }
                 }).catch(error => {
@@ -253,6 +307,7 @@ module.exports = function (app, usersRepository, offersRepository) {
                 res.send("No es posible borrar el usuario administrador");
             }
 
+        //En caso de que se borren varios usuarios
         } else {
             for (let i = 0; i < usersToDelete.length; i++) {
                 usersToDelete[i] = usersToDelete[i].substring(0, usersToDelete[i].length - 1);
@@ -260,31 +315,79 @@ module.exports = function (app, usersRepository, offersRepository) {
             let filter = {email: {$in: usersToDelete}};
 
             if (!usersToDelete.includes('admin@email.com')) {
+
+                //Elimino el usuario
                 usersRepository.deleteUsers(filter, {}).then(result => {
                     if (result === null || result.deletedCount === 0) {
                         appLogger.createNewLog("Error al borrar los usuarios " + usersToDelete, "PET-ERR");
-                        res.send("No se han podido eliminar los usuarios");
+                        res.send("No se han podido eliminar los usuario");
                         return null;
                     } else {
-                        let filterOffers = {seller: {$in: usersToDelete}};
-                        offersRepository.deleteOffers(filterOffers,{}).then(result =>{
-                            let filterPurchases = {user: {$in: usersToDelete}};
-                            offersRepository.deletePurchases(filterPurchases,{}).then(result =>{
-                                appLogger.createNewLog("Los usuarios" + usersToDelete + " han sido borrado correctamente", "PET");
-                                res.redirect("/users/list");
+                        let allOffersFromUser = {seller: {$in: usersToDelete}};
+
+                        //Obtengo las ofertas del usuario
+                        offersRepository.getOffers(allOffersFromUser,{}).then(result => {
+                            let offerids = [];
+                            for(let i = 0; i < result.length; i++ ){
+                                offerids.push( result[i].id);
+                            }
+                            let filterToChats = {offer: {$in: offerids}};
+
+                            //Obtengo los chats de dichas ofertas
+                            chatsRepository.getChats(filterToChats,{}).then(resultChats => {
+                                let chatids = [];
+                                for(let i = 0; i < resultChats.length; i++ ){
+                                    chatids.push( resultChats[i].id);
+                                }
+                                let filterToMessages = {chat: {$in: chatids}};
+
+                                //Borro los mensajes de esos chats
+                                messagesRepository.deleteMessages(filterToMessages,{}).then(resultMessages => {
+                                    //Borro los chats
+                                    chatsRepository.deleteChats(filterToChats,{}).then(resultChatsDeleted => {
+
+                                        let filterOffers = {seller: {$in: usersToDelete}};
+                                        offersRepository.deleteOffers(filterOffers,{}).then(result =>{
+                                            let filterPurchases = {user: {$in: usersToDelete}};
+                                            offersRepository.deletePurchases(filterPurchases,{}).then(result =>{
+                                                appLogger.createNewLog("Los usuarios" + usersToDelete + " han sido borrado correctamente", "PET");
+                                                res.redirect("/users/list");
+                                            }).catch(error => {
+                                                appLogger.createNewLog("Error al borrar las compras de los usuarios " + usersToDelete, "PET-ERR");
+                                                res.send("Se ha producido un error al intentar eliminar las compras de los usuarios: " + error)
+                                            });
+                                        }).catch(error => {
+                                            appLogger.createNewLog("Error al borrar las ofertas del usuario " + usersToDelete, "PET-ERR");
+                                            res.send("Se ha producido un error al intentar eliminar las ofertas del usuario: " + error)
+                                        });
+
+
+                                    }).catch(error => {
+                                        appLogger.createNewLog("Se ha producido un error al borrar los chats de un usuario", "PET-ERR");
+                                        res.send("Se ha producido un error al borrar los chats de un usuario" + error)
+                                    });
+
+
+                                }).catch(error => {
+                                    appLogger.createNewLog("Se ha producido un error al borrar los mensajes de un usuario", "PET-ERR");
+                                    res.send("Se ha producido un error al borrar los mensajes de un usuario" + error)
+                                });
+
                             }).catch(error => {
-                                appLogger.createNewLog("Error al borrar las compras de los usuarios " + usersToDelete, "PET-ERR");
-                                res.send("Se ha producido un error al intentar eliminar las compras de los usuarios: " + error)
+                                appLogger.createNewLog("Se ha producido un error al listar los chats de una oferta", "PET-ERR");
+                                res.send("Se ha producido un error al listar los chats" + error)
                             });
+
                         }).catch(error => {
-                            appLogger.createNewLog("Error al borrar las ofertas del usuario " + usersToDelete, "PET-ERR");
-                            res.send("Se ha producido un error al intentar eliminar las ofertas del usuario: " + error)
+                            appLogger.createNewLog("Se ha producido un error al listar las ofertas del usuario " + usersToDelete, "PET-ERR");
+                            res.send("Se ha producido un error al listar las ofertas del usuario " + error)
                         });
                     }
                 }).catch(error => {
-                    appLogger.createNewLog("Error al borrar los usuarios " + usersToDelete, "PET-ERR");
-                    res.send("Se ha producido un error al intentar eliminar los usuarios: " + error)
+                    appLogger.createNewLog("Error al borrar el usuario " + usersToDelete, "PET-ERR");
+                    res.send("Se ha producido un error al intentar eliminar el usuario: " + error)
                 });
+
             } else {
                 appLogger.createNewLog("No se puede borrar al usuario administrador", "PET-ERR");
                 res.send("No es posible borrar el usuario administrador");

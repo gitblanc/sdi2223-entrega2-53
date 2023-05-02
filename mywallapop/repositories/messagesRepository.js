@@ -36,5 +36,18 @@ module.exports = {
         } catch (error) {
             throw (error);
         }
+    },
+
+    deleteMessages: async function (filter, options) {
+        try {
+            const client = await this.mongoClient.connect(this.app.get('connectionStrings'));
+            const database = client.db("myWallapop");
+            const collectionName = 'messages';
+            const messagesCollection = database.collection(collectionName);
+            const result = await messagesCollection.deleteMany(filter, options);
+            return result;
+        } catch (error) {
+            throw (error);
+        }
     }
 };
