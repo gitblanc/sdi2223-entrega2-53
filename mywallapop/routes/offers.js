@@ -287,11 +287,12 @@ module.exports = function (app, offersRepository, usersRepository) {
      * Responde a la petición GET cuando quiere ver todas las ofertas en la vista de shop
      */
     app.get('/shop', function (req, res) {
-        let filter = {};
+        let filter = {seller: {$ne: req.session.user}};
         let options = {sort: {title: 1}};
 
         if (req.query.search != null && typeof (req.query.search) != "undefined" && req.query.search != "") {
-            filter = {"title": {$regex: new RegExp(".*" + req.query.search + ".*", "i")}};
+            filter = {seller: {$ne: req.session.user},
+                "title": {$regex: new RegExp(".*" + req.query.search + ".*", "i")}};
         }
 
         let page = parseInt(req.query.page); // Es String !!!
