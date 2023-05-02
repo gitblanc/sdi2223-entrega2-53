@@ -88,7 +88,7 @@ var offersRouter = require('./routes/offers');
 const appLogger = require('./logger');
 
 //ROUTES
-require("./routes/users.js")(app, usersRepository,offersRepository, appLogger);
+require("./routes/users.js")(app, usersRepository,offersRepository, chatsRepository,messagesRepository, appLogger);
 require("./routes/offers.js")(app, offersRepository, usersRepository, appLogger);
 require("./routes/dbManagerForTests.js")(app, offersRepository, usersRepository);
 
