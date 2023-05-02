@@ -54,7 +54,7 @@
 
     function openConversation(offer) {
         $.ajax({
-            url: '/api/v1.0/offers/chats/byoffer/' + offer._id,
+            url: '/api/v1.0/offers/chats/byoffer/' + offer._id + '/?otherUser=' + offer.seller,
             type: 'GET',
             data: {},
             dataType: 'json',
