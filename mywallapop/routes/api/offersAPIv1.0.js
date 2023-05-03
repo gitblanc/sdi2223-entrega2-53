@@ -67,6 +67,18 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
         });
     });
 
+    app.get("/api/v1.0/offers/:offerId", function (req, res) {
+        let filter = {_id: new ObjectId(req.params.offerId)};
+        let options = {};
+        offersRepository.getOffers(filter, options).then(offer => {
+            res.status(200);
+            res.send({offer: offer})
+        }).catch(error => {
+            res.status(500);
+            res.json({error: "Se ha producido un error al recuperar la oferta."})
+        });
+    });
+
     /**
      * Devuelve el listado de conversaciones del usuario identificado
      */
@@ -81,7 +93,7 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
             offersRepository.getOffers({seller: activeUser}, {}).then(offers => {
                 let offersIds = [];
                 for (let i = 0; i < offers.length; i++) {
-                    offersIds.push(offers[i]._id);
+                    offersIds.push(offers[i]);
                 }
                 // obtener conversaciones cuya offer pertenece a la lista
                 chatsRepository.getChats({"offer": {$in: offersIds}}, {}).then(chatsSeller => {
@@ -106,97 +118,60 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
     /**
      * Petición POST que añadirá un mensjae  ala base de datos. Para añadirlo la oferta tiene que existir
      */
-    app.post("/api/v1.0/chat/{:offerId}/{:chatId}", function(req, res) {
-        try {
-            const dateAux = new Date();
+    app.post("/api/v1.0/chat/:offerId/:chatId", function (req, res) {
+            try {
+                //el mensaje tiene que tener el id del chat al que pertenece
+                //busco el chat con el id de la oferta y el id del usuario y si lo encuntra lo inserta en ese chat y sini pues creara otro
+                let message = {
+                    sender: req.session.user,
+                    text: req.body.messageText,
+                    date: new Date().toLocaleDateString(),
+                    read: false,
+                    chatId: new ObjectId(req.params.chatId)
+                }
 
-            //el mensaje tiene que tener el id del chat al que pertenece
-            //busco el chat con el id de la oferta y el id del usuario y si lo encuntra lo inserta en ese chat y sini pues creara otro
-            let message = {
-                sender: req.body.user,
-                text: req.body.text,
-                date: dateAux.getDate() + "/" + dateAux.getMonth() + "/" + dateAux.getFullYear(),
-                hour: dateAux.getHours() + ":" + dateAux.getMinutes() + ":" + dateAux.getSeconds(),
-                read: false,
-                chatId: null
-            }
+                let offerId = ObjectId(req.params.offerId);
 
-            let offerId = ObjectId(req.params.id);
-            let options = {};
+                let options = {};
 
-            let isValid = true;
+                let isValid = true;
 
-            if (message.sender === null || message.sender === "") {
-                isValid = false;
-            }
+                if (message.sender === null || message.sender === "") {
+                    isValid = false;
+                }
 
-            if (message.text === null || message.text === ""){
-                isValid = false;
-            }
-
-            if(isValid) {
-                offersRepository.findOffer({_id:offerId}, {}).then(offer => {
-                    if(offer != null) {
-                        if(offer.seller != message.sender) {
-                            let filter = {offer: offerId, user: message.sender};
-                            chatsRepository.findChat(filter, {}).then(chat => {
-                                if (chat === null || typeof chat === "undefined") {
-                                    // Crearlo
-                                    chat = {
-                                        offer: offerId,
-                                        user: message.sender
-                                    }
-                                    chatsRepository.insertChat(chat).then(insertedId => {
-                                        message.chatId = chat._id;
-                                    })
-
-                                    messagesRepository.insertMessage(message, function (messageId) {
-                                        if(messageId == null) {
-                                            res.send("Se ha producido un error al añadir el mensaje")
-                                        } else {
-                                            res.status(201);
-                                            res.json( {
-                                                message: "Mansaje añadido correctamente.",
-                                                _id: messageId
-                                            })
-                                        }
-                                    })
-                                } else {
-                                        message.chatId = chat._id;
-                                        messagesRepository.insertMessage(message, function (messageId) {
-                                            if(messageId == null) {
-                                                res.send("Se ha producido un error al añadir el mensaje")
-                                            } else {
-                                                res.status(201);
-                                                res.json( {
-                                                    message: "Mansaje añadido correctamente.",
-                                                    _id: messageId
-                                            })
-                                            }
-                                        })
-                                }
-                            })
-
-                        }else {
-                            res.status(500);
-                            res.send("No te puedes mandar un mensaje a ti mismo.")
-                        }
-
-                    } else {
-                        res.status(500);
-                        res.send("Oferta no encontrada.")
+                if (message.text === null || message.text === "") {
+                    isValid = false;
+                }
+                const offerFilter = {_id: new ObjectId(offerId)};
+                offersRepository.findOffer(offerFilter, {}).then(offer => {
+                    if (offer == null) {
+                        isValid = false;
                     }
                 })
-            } else {
-                res.status(409);
-                res.send("Alguno de los campos del mensaje no son validos");
-            }
 
-        } catch (e) {
-            res.status(500);
-            res.json({error: "Se ha producido un error al intentar añadir el mensaje: " + e})
+                if (isValid) {
+                    messagesRepository.insertMessage(message, function (messageId) {
+                        if (messageId == null) {
+                            res.send("Se ha producido un error al añadir el mensaje")
+                        } else {
+                            res.status(201);
+                            res.json({
+                                message: "Mansaje añadido correctamente.",
+                                _id: messageId
+                            })
+                        }
+                    })
+                } else {
+                    res.status(500);
+                    res.send("Oferta no encontrada.")
+                }
+            } catch (e) {
+                res.status(500);
+                res.json({error: "Se ha producido un error al intentar añadir el mensaje: " + e})
+            }
         }
-    })
+    )
 
     /**
      * Dado el id de una oferta y el otro usuario (que debe estar en la URL si el solicitador es el vendedor)
@@ -206,10 +181,9 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
         // Obtengo parámetros de la URL
         let offerId = ObjectId(req.params.offerId);
         let otherUser = req.query.otherUser;
-        let activeUser = res.user;
-
+        let activeUser = req.session.user;
         // Busco oferta para ver el propietario
-        offersRepository.findOffer({_id:offerId}, {}).then(offer => {
+        offersRepository.findOffer({_id: offerId}, {}).then(offer => {
             let userClient;
             // si el usuario que solicita el chat es el vendedor
             if (activeUser === offer.seller) {
@@ -248,11 +222,10 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
     });
 
     function getMessages(res, chatId) {
-        let filterMessages = {chat: chatId}
+        let filterMessages = {chatId: chatId}
         messagesRepository.getMessages(filterMessages, {}).then(messages => {
-
             res.status(200);
-            res.json({messages: messages});
+            res.json({chat: chatId, messages: messages});
 
         }).catch(error => {
             res.status(500);
@@ -261,7 +234,7 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
     }
 
     /**
-     * Dado el id de una conversación da sus mensajes. No la crea si no existe. Este método SOLO SE USA EN LAS PRUEBAS
+     * Dado el id de un chat da sus mensajes. No la crea si no existe. Este método SOLO SE USA EN LAS PRUEBAS
      */
     app.get("/api/v1.0/offers/chats/:chatId", function (req, res) {
         let chatId = ObjectId(req.params.chatId);

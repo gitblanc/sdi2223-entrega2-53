@@ -25,6 +25,10 @@ class Sdi2223Entrega2TestApplicationTests {
     // MACOSX
     //static String PathFirefox = "/Applications/Firefox.app/Contents/MacOS/firefox-bin";
     //static String Geckodriver = "/Users/USUARIO/selenium/geckodriver-v0.30.0-macos";
+
+    //static String Geckodriver = "C:\\Users\\Diego\\Documents\\Universidad\\4º curso\\2º Semestre\\SDI\\PL-SDI-Sesión5-material\\geckodriver-v0.30.0-win64.exe";
+
+
 //Común a Windows y a MACOSX
     static WebDriver driver = getDriver(PathFirefox, Geckodriver);
     static String URL = "http://localhost:8081";
@@ -811,6 +815,89 @@ class Sdi2223Entrega2TestApplicationTests {
         List<WebElement> logs = PO_View.checkElementBy(driver, "free", "//tbody/tr");
         // Solo debe quedar el log "se borraron los logs"
         Assertions.assertEquals(1, logs.size());
+    }
+
+    /**
+     * [Prueba48] Inicio de sesión con datos válidos.
+     */
+    @Test
+    @Order(48)
+    void PR48(){
+        driver.navigate().to(URL+"/apiclient/client.html");
+        PO_LoginView.fillLoginForm(driver, "user08@email.com", "user08");
+        List<WebElement> elements = PO_OwnOffersView.checkElementBy(driver, "text", "Listado de ofertas");
+        Assertions.assertEquals(1, elements.size());
+    }
+
+    /**
+     * [Prueba49] Inicio de sesión con datos inválidos (email existente, pero contraseña incorrecta).
+     */
+    @Test
+    @Order(49)
+    void PR49(){
+        driver.navigate().to(URL+"/apiclient/client.html");
+        PO_LoginView.fillLoginForm(driver, "user08@email.com", "asdfasdf");
+        List<WebElement> elements = PO_OwnOffersView.checkElementBy(driver, "id", "div-errors");
+        Assertions.assertEquals(1, elements.size());
+    }
+
+    /**
+     * [Prueba50] Inicio de sesión con datos inválidos (campo email o contraseña vacíos).
+     */
+    @Test
+    @Order(50)
+    void PR50(){
+        driver.navigate().to(URL+"/apiclient/client.html");
+        PO_LoginView.fillLoginForm(driver, "user08@email.com", "        ");
+        List<WebElement> elements = PO_OwnOffersView.checkElementBy(driver, "id", "div-errors");
+        Assertions.assertEquals(1, elements.size());
+    }
+
+    /**
+     * [Prueba51] Mostrar el listado de ofertas disponibles y comprobar que se muestran todas las que existen,
+     * menos las del usuario identificado.
+     */
+    @Test
+    @Order(51)
+    void PR51(){
+        driver.navigate().to(URL+"/apiclient/client.html");
+        PO_LoginView.fillLoginForm(driver, "user08@email.com", "user08");
+        List<WebElement> elements = PO_OwnOffersView.checkElementBy(driver, "text", "Listado de ofertas");
+        Assertions.assertEquals(1, elements.size());
+        elements = PO_OwnOffersView.checkElementBy(driver, "free", "//tbody/tr");
+        Assertions.assertEquals(99, elements.size());
+    }
+
+    /**
+     * [Prueba52] Sobre listado de ofertas disponibles (a elección de desarrollador), enviar un mensaje a una
+     * oferta concreta. Se abriría dicha conversación por primera vez. Comprobar que el mensaje aparece
+     * en el listado de mensajes.
+     */
+    @Test
+    @Order(52)
+    void PR52(){
+        // hago login
+        driver.navigate().to(URL+"/apiclient/client.html");
+        PO_LoginView.fillLoginForm(driver, "user08@email.com", "user08");
+
+        // entro a una conversación
+        List<WebElement> elements = PO_OwnOffersView.checkElementBy(driver, "free",
+                "//tbody/tr/td/button[@id='Oferta-user02-n1-user02@email.com']");
+        Assertions.assertEquals(1, elements.size());
+        elements.get(0).click();
+
+        // mando un mensaje
+        WebElement email = driver.findElement(By.name("message"));
+        email.click();
+        email.clear();
+        email.sendKeys("PRUEBA");
+        By boton = By.className("btn");
+        driver.findElement(boton).click();
+
+        // compruebo que aparece
+        elements = PO_OwnOffersView.checkElementBy(driver, "free",
+                "//tbody/tr/td[contains(text(), 'PRUEBA')]");
+        Assertions.assertEquals(1, elements.size());
     }
 
     /* Ejemplos de pruebas de llamada a una API-REST */
