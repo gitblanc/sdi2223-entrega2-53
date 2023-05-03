@@ -115,7 +115,7 @@ module.exports = function (app, usersRepository, offersRepository, chatsReposito
     })
 
     /**
-     * POST: Logs delete
+     * POST: Borrara los logs
      */
     app.post('/users/logs/delete', function (req, res) {
         let filter = {};
@@ -255,7 +255,7 @@ module.exports = function (app, usersRepository, offersRepository, chatsReposito
     });
 
     /**
-     * Borra los usuarios pasados por parámetro
+     * POS: Borra los usuarios pasados por parámetro
      */
     app.post('/users/delete', function (req, res) {
         let usersToDelete = req.body.check;
@@ -284,17 +284,17 @@ module.exports = function (app, usersRepository, offersRepository, chatsReposito
                         offersRepository.getOffers(allOffersFromUser,{}).then(result => {
                             let offerids = [];
                             for(let i = 0; i < result.length; i++ ){
-                                offerids.push( result[i].id);
+                                offerids.push( result[i]._id);
                             }
-                            let filterToChats = {offer: {$in: offerids}};
+                            let filterToChats = {$or :[{offer: {$in: offerids}},{user: usersToDelete}]};
 
                             //Obtengo los chats de dichas ofertas
                             chatsRepository.getChats(filterToChats,{}).then(resultChats => {
                                 let chatids = [];
                                 for(let i = 0; i < resultChats.length; i++ ){
-                                    chatids.push( resultChats[i].id);
+                                    chatids.push( resultChats[i]._id);
                                 }
-                                let filterToMessages = {chat: {$in: chatids}};
+                                let filterToMessages = {chatId: {$in: chatids}};
 
                                 //Borro los mensajes de esos chats
                                 messagesRepository.deleteMessages(filterToMessages,{}).then(resultMessages => {
@@ -370,17 +370,17 @@ module.exports = function (app, usersRepository, offersRepository, chatsReposito
                         offersRepository.getOffers(allOffersFromUser,{}).then(result => {
                             let offerids = [];
                             for(let i = 0; i < result.length; i++ ){
-                                offerids.push( result[i].id);
+                                offerids.push( result[i]._id);
                             }
-                            let filterToChats = {offer: {$in: offerids}};
+                            let filterToChats = {$or :[{offer: {$in: offerids}},{user:  {$in: usersToDelete}}]};
 
                             //Obtengo los chats de dichas ofertas
                             chatsRepository.getChats(filterToChats,{}).then(resultChats => {
                                 let chatids = [];
                                 for(let i = 0; i < resultChats.length; i++ ){
-                                    chatids.push( resultChats[i].id);
+                                    chatids.push( resultChats[i]._id);
                                 }
-                                let filterToMessages = {chat: {$in: chatids}};
+                                let filterToMessages = {chatId: {$in: chatids}};
 
                                 //Borro los mensajes de esos chats
                                 messagesRepository.deleteMessages(filterToMessages,{}).then(resultMessages => {
