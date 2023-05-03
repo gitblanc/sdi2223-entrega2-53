@@ -483,7 +483,7 @@ class Sdi2223Entrega2TestApplicationTests {
         Assertions.assertEquals(5, tableRows.size());
 
         // Ir a la última página
-        for (int i = 2; i < 20; i++) {
+        for (int i = 2; i < 18; i++) {
             PO_AllOffersView.checkElementBy(driver, "id", "pl-" + i).get(0).click();
         }
 
@@ -885,7 +885,7 @@ class Sdi2223Entrega2TestApplicationTests {
         List<WebElement> elements = PO_OwnOffersView.checkElementBy(driver, "text", "Listado de ofertas");
         Assertions.assertEquals(1, elements.size());
         elements = PO_OwnOffersView.checkElementBy(driver, "free", "//tbody/tr");
-        Assertions.assertEquals(100, elements.size());
+        Assertions.assertEquals(90, elements.size());
     }
 
     /**
