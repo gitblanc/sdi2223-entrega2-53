@@ -16,7 +16,7 @@
     <form class="form-horizontal" id="messageForm" action="">
         <label for="message">Mensaje:</label>
         <input type="text" id="message" name="message" placeholder="Escribe aquí tu mensaje...">
-        <button type="submit">Enviar</button>
+        <button class="btn" type="submit">Enviar</button>
     </form>
 </div>
 <script>
@@ -53,7 +53,7 @@
     }
 
     async function addMessage(message) {
-        const url = `${URLbase}/chat/${offerOfChat._id}/${chatId}`;
+        const url = `${URLbase}/chat/${offerOfChat}/${chatId}`;
         const data = {offerId: offerOfChat._id, messageText: message, chatId: chatId};
         const headers = {token: token};
 
@@ -76,7 +76,7 @@
 
         async function reloadMessages() {
             $.ajax({
-                url: '/api/v1.0/offers/chats/byoffer/' + offerOfChat._id,
+                url: '/api/v1.0/offers/chats/byoffer/' + offerOfChat,
                 type: 'GET',
                 data: {},
                 dataType: 'json',

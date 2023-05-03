@@ -41,12 +41,13 @@
         for (let i = 0; i < offers.length; i++) {
             $("#offersTableBody").append(
                 "<tr>" +
-                "<td id='" + offers[i].title + "'>" + offers[i].title + "</td>" +
+                "<td id='" + offers[i].title+'-'+offers[i].seller + "'>" + offers[i].title + "</td>" +
                 "<td>" + offers[i].description + "</td>" +
                 "<td>" + offers[i].price + "</td>" +
                 "<td>" + offers[i].date + "</td>" +
                 "<td>" + offers[i].seller + "</td>" +
-                "<td><button id='" + offers[i]._id + "' onclick='openConversation(" + JSON.stringify(offers[i]) + ")'>" + "Chat" + "</button></td>" +
+                "<td><button id='" + offers[i].title+'-'+offers[i].seller + "'" +
+                    " onclick='openConversation(" + JSON.stringify(offers[i]) + ")'>" + "Chat" + "</button></td>" +
                 "</tr>"
             );
         }
