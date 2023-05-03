@@ -19,7 +19,7 @@ module.exports = function (app, offersRepository, usersRepository) {
                 name: "testsBorrar",
                 surname: "testsBorrar",
                 birthdate: "2001-01-01",
-                amount: 100,
+                amount: i === 10?0:100,
                 role: 'Usuario Estándar',
                 password: securePassword
             }

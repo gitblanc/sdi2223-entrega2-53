@@ -66,4 +66,9 @@ public class PO_NavView extends PO_View {
                 getTimeout());
         Selectedlanguage.get(0).click();
     }
+
+    public static void clickLogsOption(WebDriver driver) {
+        List<WebElement> elements = checkElementBy(driver, "id", "logs");
+        elements.get(0).click();
+    }
 }

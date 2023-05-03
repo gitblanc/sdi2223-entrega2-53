@@ -630,6 +630,189 @@ class Sdi2223Entrega2TestApplicationTests {
         PO_LoginView.logout(driver);
     }
 
+    /**
+     * [Prueba31] Sobre el listado de ofertas de un usuario con más de 20 euros de saldo, pinchar en el enlace
+     * Destacada y a continuación comprobar: i) que aparece en el listado de ofertas destacadas para los
+     * usuarios y que el saldo del usuario se actualiza adecuadamente en la vista del ofertante (comprobar
+     * saldo antes y después, que deberá diferir en 20€ ).
+     */
+    @Test
+    @Order(31)
+    void PR31(){
+        PO_LoginView.login(driver, "user11@email.com", "user11", "Lista de ofertas propias");
+
+        String checkText = "Oferta-user11-n1";
+        int amountBefore = PO_OwnOffersView.getMyAmount(driver);
+        //Ahora vamos a destacar la oferta.
+        PO_OwnOffersView.checkElementBy(driver, "free", "/html/body/div/table/tbody/tr[1]/td[6]/a").get(0).click();
+        // Comprobamos
+        int amountAfter = PO_OwnOffersView.getMyAmount(driver);
+        Assertions.assertEquals(amountAfter, amountBefore - 20);
+        PO_OwnOffersView.clickAllOffersOption(driver);
+        List<WebElement> offers = PO_OwnOffersView.checkElementBy(driver, "class", "title-highlight");
+        String title =offers.get(0).getText();
+        Assertions.assertEquals(title, checkText);
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba32] Sobre el listado de ofertas de un usuario con menos de 20 euros de saldo, pinchar en el
+     * enlace Destacada y a continuación comprobar que se muestra el mensaje de saldo no suficiente.
+     */
+    @Test
+    @Order(32)
+    void PR32(){
+        PO_LoginView.login(driver, "user10@email.com", "user10", "Lista de ofertas propias");
+
+        //Ahora vamos a destacar la oferta.
+        PO_OwnOffersView.checkElementBy(driver, "free", "/html/body/div/table/tbody/tr[1]/td[6]/a").get(0).click();
+        // Comprobamos
+        String checkText= "No tienes al menos 20 euros";
+        WebElement error = PO_OwnOffersView.checkElementBy(driver, "text", checkText).get(0);
+        Assertions.assertEquals(error.getText(), checkText);
+
+        driver.navigate().to(URL+"/publications");
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba33] Intentar acceder sin estar autenticado a la opción de listado de usuarios. Se deberá volver
+     * al formulario de login.
+     */
+    @Test
+    @Order(33)
+    void PR33(){
+        driver.navigate().to(URL+"/users/list");
+
+        PO_View.checkElementBy(driver, "text", "Identificación de usuario");
+    }
+
+    /**
+     * [Prueba34] Intentar acceder sin estar autenticado a la opción de listado de conversaciones
+     * [REQUISITO OBLIGATORIO S5]. Se deberá volver al formulario de login.
+     */
+    @Test
+    @Order(34)
+    void PR34(){
+        /*
+        final String RestAssuredURL = "http://localhost:8081/api/v1.0/offers/chats/list";
+        Response response = RestAssured.get(RestAssuredURL);
+        Assertions.assertEquals(403, response.getStatusCode());
+
+         */
+        driver.navigate().to(URL+"/apiclient/client.html?w=chats");
+        PO_View.checkElementBy(driver, "id", "widget-login");
+    }
+
+    /**
+     * [Prueba35] Estando autenticado como usuario estándar intentar acceder a una opción disponible solo
+     * para usuarios administradores (Añadir menú de auditoria (visualizar logs)). Se deberá indicar un
+     * mensaje de acción prohibida.
+     */
+    @Test
+    @Order(35)
+    void PR35(){
+        PO_LoginView.login(driver, "user10@email.com", "user10", "Lista de ofertas propias");
+
+        driver.navigate().to(URL+"/users/logs");
+
+        PO_View.checkElementBy(driver, "text", "Solo el administrador puede acceder a lista de logs");
+        driver.navigate().to(URL+"/publications");
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba36] Estando autenticado como usuario administrador visualizar todos los logs generados en
+     * una serie de interacciones. Esta prueba deberá generar al menos dos interacciones de cada tipo y
+     * comprobar que el listado incluye los logs correspondientes.
+     */
+    @Test
+    @Order(36)
+    void PR36(){
+        // Generar interacciones
+        PO_HomeView.clickOption(driver, "login", "class", "btn btn-primary");
+
+//		String log1ExpectedType = "LOGIN-ERR";
+//		String log1ExpectedDescription = "user14@email.com";
+        PO_LoginView.fillLoginForm(driver, "user14@email.com", "aaaaa");
+
+//		String log2ExpectedType = "LOGIN-ERR";
+//		String log2ExpectedDescription = "user10@email.com";
+        PO_LoginView.fillLoginForm(driver, "user10@email.com", "bbbbb");
+
+//		String log3ExpectedType = "LOGIN-EX";
+//		String log3ExpectedDescription = "user14@email.com";
+        PO_LoginView.fillLoginForm(driver, "user14@email.com", "user14");
+
+//		String log4ExpectedType = "LOGIN-PET";
+//		String log4ExpectedMapping = "offer/add";
+//		String log4ExpectedHttpMethod = "GET";
+        PO_OwnOffersView.clickAddOfferOption(driver);
+
+//		String log5ExpectedType = "ALTA";
+//		String log5ExpectedMapping = "offer/add";
+//		String log5ExpectedHttpMethod = "POST";
+//		String log5ExpectedParam1 = "Oferta-user14-n11";
+//		String log5ExpectedParam2 = "descripcion";
+//		String log5ExpectedParam3 = "110";
+        PO_AddOfferView.fillFormAddOffer(driver, "Oferta-user14-n11", "testsBorrar", "110", false);
+
+//		String log6ExpectedType = "LOGOUT";
+//		String log6ExpectedDescription = "user14@email.com";
+        PO_LoginView.logout(driver);
+
+//		String log7ExpectedType = "LOGIN-PET";
+//		String log7ExpectedMapping = "signup";
+//		String log7ExpectedHttpMethod = "GET";
+        PO_HomeView.clickOption(driver, "signup", "class", "btn btn-primary");
+
+//		String log8ExpectedType = "ALTA";
+//		String log8ExpectedMapping = "signup";
+//		String log8ExpectedHttpMethod = "POST";
+//		String log8ExpectedParam1 = "user123@email.com";
+//		String log8ExpectedParam2 = "user123";
+//		String log8ExpectedParam3 = "apellido123";
+//		String log8ExpectedParam4 = "77777";
+//		String log8ExpectedParam5 = "77777";
+        PO_SignUpView.fillForm(driver, "user123@email.com", "user123", "apellido123", "2021-01-01", "77777", "77777");
+
+//		String log9ExpectedType = "LOGOUT";
+//		String log9ExpectedDescription = "user123@email.com";
+        PO_LoginView.logout(driver);
+
+//		String log10ExpectedType = "LOGIN-EX";
+//		String log10ExpectedDescription = "admin@email.com";
+        PO_LoginView.fillLoginForm(driver, "admin@email.com", "admin");
+
+        // Ver logs
+        PO_AdminView.clickLogsOption(driver);
+
+        List<WebElement> logs = PO_View.checkElementBy(driver, "free", "//tbody/tr");
+        Assertions.assertTrue(logs.size() >= 10);
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba34] Estando autenticado como usuario administrador, ir a visualización de logs, pulsar el
+     * botón/enlace borrar logs y comprobar que se eliminan los logs de la base de datos.
+     */
+    @Test
+    @Order(37)
+    void PR37(){
+        PO_LoginView.loginAsAdmin(driver);
+
+        PO_AdminView.clickLogsOption(driver);
+
+        PO_View.checkElementBy(driver, "id", "buttonDeleteLogs").get(0).click();
+
+        List<WebElement> logs = PO_View.checkElementBy(driver, "free", "//tbody/tr");
+        // Solo debe quedar el log "se borraron los logs"
+        Assertions.assertEquals(1, logs.size());
+    }
+
     /* Ejemplos de pruebas de llamada a una API-REST */
     /* ---- Probamos a obtener lista de canciones sin token ---- */
     /*
