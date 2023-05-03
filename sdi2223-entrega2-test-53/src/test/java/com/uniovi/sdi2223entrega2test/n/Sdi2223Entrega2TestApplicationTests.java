@@ -83,6 +83,18 @@ class Sdi2223Entrega2TestApplicationTests {
         Assertions.assertEquals(checkText, result.get(0).getText());
 
         PO_LoginView.logout(driver);
+
+        // Borrar nuevo usuario
+        PO_LoginView.loginAsAdmin(driver);
+        // Ir a la última página
+        for (int i = 2; i < 5; i++) {
+            PO_AdminView.checkElementBy(driver, "id", "pl-" + i).get(0).click();
+        }
+
+        // Lo borramos no alterar el número total de usuarios para los siguientes tests
+        List<WebElement> usersList = PO_AdminView.getUsersList(driver);
+        PO_AdminView.deleteUsers(driver, usersList.size()-1);
+
     }
 
     /**
@@ -118,7 +130,7 @@ class Sdi2223Entrega2TestApplicationTests {
     @Order(4)
     public void PR04() {
         PO_HomeView.clickOption(driver, "signup", "class", "btn btn-primary");
-        PO_SignUpView.fillForm(driver, "emailvalido@pruebas.com", "aaaa", "bbbb",
+        PO_SignUpView.fillForm(driver, "user01@email.com", "aaaa", "bbbb",
                 "2001-01-01", "77777", "77777");
         String checkText = "Se ha producido un error al registrar el usuario, email ya existe.";
         List<WebElement> result = PO_View.checkElementBy(driver, "text", checkText);
@@ -318,11 +330,16 @@ class Sdi2223Entrega2TestApplicationTests {
         PO_AddOfferView.fillFormAddOffer(driver, checkText, "testsBorrar", "100", false);
         // Ir a la última página
         for (int i = 2; i < 4; i++) {
-            PO_AdminView.checkElementBy(driver, "id", "pl-" + i).get(0).click();
+            PO_OwnOffersView.checkElementBy(driver, "id", "pl-" + i).get(0).click();
         }
         //Comprobamos que aparece la oferta en la página
         List<WebElement> elements = PO_View.checkElementBy(driver, "text", checkText);
         Assertions.assertEquals(checkText, elements.get(0).getText());
+
+        // La borramos para no alterar el número total de ofertas para los siguientes tests
+        List<WebElement> offers = PO_OwnOffersView.getOffersList(driver);
+        WebElement offer = offers.get(offers.size()-1);
+        offer.findElement(By.className("offer-delete")).click();
 
         PO_LoginView.logout(driver);
     }
@@ -466,14 +483,14 @@ class Sdi2223Entrega2TestApplicationTests {
         Assertions.assertEquals(5, tableRows.size());
 
         // Ir a la última página
-        for (int i = 2; i < 23; i++) {
+        for (int i = 2; i < 20; i++) {
             PO_AllOffersView.checkElementBy(driver, "id", "pl-" + i).get(0).click();
         }
 
         // Estamos en la última página
         tableRows = PO_AllOffersView.getOffersList(driver);
 
-        Assertions.assertEquals(4, tableRows.size());
+        Assertions.assertEquals(5, tableRows.size());
 
         PO_LoginView.logout(driver);
     }
@@ -759,7 +776,7 @@ class Sdi2223Entrega2TestApplicationTests {
 //		String log5ExpectedMapping = "offer/add";
 //		String log5ExpectedHttpMethod = "POST";
 //		String log5ExpectedParam1 = "Oferta-user14-n11";
-//		String log5ExpectedParam2 = "descripcion";
+//		String log5ExpectedParam2 = "testsBorrar";
 //		String log5ExpectedParam3 = "110";
         PO_AddOfferView.fillFormAddOffer(driver, "Oferta-user14-n11", "testsBorrar", "110", false);
 
@@ -777,10 +794,10 @@ class Sdi2223Entrega2TestApplicationTests {
 //		String log8ExpectedHttpMethod = "POST";
 //		String log8ExpectedParam1 = "user123@email.com";
 //		String log8ExpectedParam2 = "user123";
-//		String log8ExpectedParam3 = "apellido123";
+//		String log8ExpectedParam3 = "testsBorrar";
 //		String log8ExpectedParam4 = "77777";
 //		String log8ExpectedParam5 = "77777";
-        PO_SignUpView.fillForm(driver, "user123@email.com", "user123", "apellido123", "2021-01-01", "77777", "77777");
+        PO_SignUpView.fillForm(driver, "user123@email.com", "testsBorrar", "testsBorrar", "2021-01-01", "77777", "77777");
 
 //		String log9ExpectedType = "LOGOUT";
 //		String log9ExpectedDescription = "user123@email.com";
@@ -812,9 +829,12 @@ class Sdi2223Entrega2TestApplicationTests {
 
         PO_View.checkElementBy(driver, "id", "buttonDeleteLogs").get(0).click();
 
-        List<WebElement> logs = PO_View.checkElementBy(driver, "free", "//tbody/tr");
-        // Solo debe quedar el log "se borraron los logs"
+        List<WebElement> logsBody = PO_View.checkElementBy(driver, "free", "//tbody");
+        List<WebElement> logs = logsBody.get(0).findElements(By.tagName("tr"));
+        // Log de que se borro todos los logs
         Assertions.assertEquals(1, logs.size());
+
+        PO_LoginView.logout(driver);
     }
 
     /**
@@ -865,7 +885,7 @@ class Sdi2223Entrega2TestApplicationTests {
         List<WebElement> elements = PO_OwnOffersView.checkElementBy(driver, "text", "Listado de ofertas");
         Assertions.assertEquals(1, elements.size());
         elements = PO_OwnOffersView.checkElementBy(driver, "free", "//tbody/tr");
-        Assertions.assertEquals(99, elements.size());
+        Assertions.assertEquals(100, elements.size());
     }
 
     /**

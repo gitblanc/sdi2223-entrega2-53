@@ -1,5 +1,5 @@
 const {ObjectId} = require("mongodb");
-module.exports = function (app, offersRepository, usersRepository) {
+module.exports = function (app, offersRepository, usersRepository, chatsRepository, messagesRepository) {
 
     /**
      * Inserta usuarios con nombre 'testsBorrar' y ofertas con título 'testsBorrar' en la base de datos
@@ -95,9 +95,19 @@ module.exports = function (app, offersRepository, usersRepository) {
                 let filterPurchases = {$or:[{user: "user14@email.com"},{user: "user09@email.com"},
                         {user: "user08@email.com"},{user: "user07@email.com"}]};
                 offersRepository.deletePurchases(filterPurchases, options).then(() => {
+                    let filterChats = {$or:[{user: "user01@email.com"}, {user: "user08@email.com"}]};
+                    chatsRepository.deleteChats(filterChats, options).then(() => {
+                        let filterMessages = {text: "PRUEBA"};
+                        messagesRepository.deleteMessages(filterMessages, options).then(() => {
 
-                    res.send("datos de los tests quitados");
+                            res.send("datos de los tests quitados");
 
+                        }).catch(error => {
+                            res.send("Error al quitar los mensajes de los tests " + error);
+                        })
+                    }).catch(error => {
+                        res.send("Error al quitar los chats de los tests " + error);
+                    })
                 }).catch(error => {
                     res.send("Error al quitar las compras de los tests " + error);
                 })
