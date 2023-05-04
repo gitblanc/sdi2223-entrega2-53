@@ -97,8 +97,14 @@
         });
     }
 
-    reloadMessages().then(() => {
-        loadMessages();
-    });
-    setInterval(loadMessages, 2000);//para recargar los mensajes
+    async function reloadChat(){
+        reloadMessages().then(() => {
+            loadMessages();
+        });
+    }
+
+    reloadChat();
+
+    setInterval(reloadChat, 2000);
+    // setInterval(loadMessages, 2000);//para recargar los mensajes
 </script>
