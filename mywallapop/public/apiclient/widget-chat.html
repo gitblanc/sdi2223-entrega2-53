@@ -73,28 +73,29 @@
                 $("#main-container").load("widget-chat.html");
             },
         });
-
-        async function reloadMessages() {
-            $.ajax({
-                url: '/api/v1.0/offers/chats/byoffer/' + offerOfChat,
-                type: 'GET',
-                data: {},
-                dataType: 'json',
-                headers: {
-                    "token": token
-                },
-                success: function (response) {
-                    messages = response.messages;//we store the chat content (messages and )
-                },
-                error: function (error) {
-                    console.log(error);
-                    $("#main-container").load("./widget-offers.html");
-                }
-            });
-        }
     }
 
+    async function reloadMessages() {
+        $.ajax({
+            url: URLbase + "/offers/chats/" + chatId,
+            type: 'GET',
+            data: {},
+            dataType: 'json',
+            headers: {
+                "token": token
+            },
+            success: function (response) {
+                messages = response.messages;//we store the chat content (messages and )
+            },
+            error: function (error) {
+                console.log(error);
+                $("#main-container").load("./widget-offers.html");
+            }
+        });
+    }
 
-    loadMessages();
+    reloadMessages().then(() => {
+        loadMessages();
+    });
     setInterval(loadMessages, 2000);//para recargar los mensajes
 </script>

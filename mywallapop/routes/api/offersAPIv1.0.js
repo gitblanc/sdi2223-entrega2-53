@@ -93,7 +93,7 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
             offersRepository.getOffers({seller: activeUser}, {}).then(offers => {
                 let offersIds = [];
                 for (let i = 0; i < offers.length; i++) {
-                    offersIds.push(offers[i]);
+                    offersIds.push(offers[i]._id);
                 }
                 // obtener conversaciones cuya offer pertenece a la lista
                 chatsRepository.getChats({"offer": {$in: offersIds}}, {}).then(chatsSeller => {
@@ -234,12 +234,12 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
     }
 
     /**
-     * Dado el id de un chat da sus mensajes. No la crea si no existe. Este método SOLO SE USA EN LAS PRUEBAS
+     * Dado el id de un chat da sus mensajes. No la crea si no existe.
      */
     app.get("/api/v1.0/offers/chats/:chatId", function (req, res) {
         let chatId = ObjectId(req.params.chatId);
 
-        messagesRepository.getMessages({chat: chatId}, {}).then(messages => {
+        messagesRepository.getMessages({chatId: chatId}, {}).then(messages => {
 
             res.status(200);
             res.json({messages: messages});

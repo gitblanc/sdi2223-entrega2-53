@@ -15,7 +15,7 @@
 <script>
     function openConversation(chat, chatOffer) {
         $.ajax({
-            url: '/api/v1.0/offers/chats/' + chat,
+            url:  URLbase + "/offers/chats/" + chat,
             type: 'GET',
             data: {},
             dataType: 'json',
@@ -23,8 +23,7 @@
                 "token": token
             },
             success: function (response) {
-                console.log(response);
-                messages = response.messages;//we store the chat content (messages and )
+                messages = response.messages;
                 chatId = chat;
                 offerOfChat = chatOffer;
                 $("#main-container").load("./widget-chat.html");
