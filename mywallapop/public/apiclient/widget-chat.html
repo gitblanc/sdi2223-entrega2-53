@@ -20,6 +20,7 @@
     </form>
 </div>
 <script>
+    window.history.pushState("", "", "/apiclient/client.html?w=chat");
     // Select the "Enviar" button using its ID and add an event listener for the "click" event
     document.getElementById("messageForm").addEventListener("submit", function (event) {
         event.preventDefault(); // Prevent the form from submitting and reloading the page
@@ -70,7 +71,9 @@
                 });
             },
             error: function (error) {
-                $("#main-container").load("widget-chat.html");
+                $("#div-errors").remove();
+                $("#messageForm")
+                    .prepend("<div id='div-errors' class='alert alert-danger'>El mensaje no es válido</div>");
             },
         });
     }

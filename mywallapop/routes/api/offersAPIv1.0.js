@@ -140,7 +140,7 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
                     isValid = false;
                 }
 
-                if (message.text === null || message.text === "") {
+                if (message.text === null || message.text === undefined || message.text.trim().length === 0) {
                     isValid = false;
                 }
                 const offerFilter = {_id: new ObjectId(offerId)};

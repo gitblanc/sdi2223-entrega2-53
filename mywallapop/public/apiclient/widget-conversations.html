@@ -13,6 +13,7 @@
     </table>
 </div>
 <script>
+    window.history.pushState("", "", "/apiclient/client.html?w=conversation");
     function openConversation(chat, chatOffer) {
         $.ajax({
             url:  URLbase + "/offers/chats/" + chat,
