@@ -1,15 +1,9 @@
 const {ObjectId} = require("mongodb");
 const logsRepository = require("../repositories/logsRepository");
 const appLogger = require("../logger");
-const chatsRepository = require("../repositories/chatsRepository");
-const messagesRepository = require("../repositories/messagesRepository");
 module.exports = function (app, usersRepository, offersRepository, chatsRepository,messagesRepository) {
 
 
-    app.get('/users', function (req, res) {
-        appLogger.createNewLog("Acceso a la lista de usuarios", "PET");
-        res.send('lista de usuarios');
-    })
 
     /**
      * GET: Permite realizar el login de un usuario
@@ -255,7 +249,7 @@ module.exports = function (app, usersRepository, offersRepository, chatsReposito
     });
 
     /**
-     * POS: Borra los usuarios pasados por parámetro
+     * POST: Borra los usuarios pasados por parámetro
      */
     app.post('/users/delete', function (req, res) {
         let usersToDelete = req.body.check;

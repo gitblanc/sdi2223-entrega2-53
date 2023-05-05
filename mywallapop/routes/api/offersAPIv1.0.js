@@ -1,5 +1,9 @@
 const {ObjectId} = require("mongodb");
 module.exports = function (app, offersRepository, usersRepository, chatsRepository, messagesRepository) {
+
+    /**
+     * Comprueba la operación de logeo de un usuario con los datos introducidos
+     */
     app.post('/api/v1.0/users/login', function (req, res) {
             try {
                 if (typeof req.body.password == "undefined" || req.body.password == null) {
@@ -55,6 +59,10 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
 
         }
     )
+
+    /**
+     * Devuelve la lista de ofertas de los usuarios que no sean el que esté en sesión
+     */
     app.get("/api/v1.0/offers", function (req, res) {
         let filter = {seller: {$ne: req.session.user}};
         let options = {};
