@@ -68,6 +68,8 @@ logsRepository.init(app, MongoClient)
 
 // _________ USER_SESSION_CHECK _____________
 app.use("/users/list", userSessionRouter);
+app.use("/users/logs", userSessionRouter);
+app.use("/offers/add",userSessionRouter);
 app.use("/offers/buy",userSessionRouter);
 app.use("/purchases",userSessionRouter);
 app.use("/publications",userSessionRouter);
