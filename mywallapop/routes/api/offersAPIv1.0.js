@@ -106,7 +106,7 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
     /**
      * Petición POST que añadirá un mensjae  ala base de datos. Para añadirlo la oferta tiene que existir
      */
-    app.post("/api/v1.0/chat/{:offerId}/{:chatId}", function(req, res) {
+    app.post("/api/v1.0/chat/{:offerId}/", function(req, res) {
         try {
             const dateAux = new Date();
 
