@@ -644,6 +644,8 @@ class Sdi2223Entrega2TestApplicationTests {
         PO_AddOfferView.fillFormAddOffer(driver, checkText, "testsBorrar", "100", true);
         int amountAfter = PO_OwnOffersView.getMyAmount(driver);
         Assertions.assertEquals(amountAfter, amountBefore - 20);
+        PO_LoginView.logout(driver);
+        PO_LoginView.login(driver, "user12@email.com", "user12", "Lista de ofertas propias");
         PO_OwnOffersView.clickAllOffersOption(driver);
         String title =PO_AllOffersView.getOffersList(driver).get(0).findElements(By.tagName("td")).get(0).getText();
         Assertions.assertEquals(title, checkText);
@@ -669,6 +671,8 @@ class Sdi2223Entrega2TestApplicationTests {
         // Comprobamos
         int amountAfter = PO_OwnOffersView.getMyAmount(driver);
         Assertions.assertEquals(amountAfter, amountBefore - 20);
+        PO_LoginView.logout(driver);
+        PO_LoginView.login(driver, "user12@email.com", "user12", "Lista de ofertas propias");
         PO_OwnOffersView.clickAllOffersOption(driver);
         List<WebElement> offers = PO_OwnOffersView.checkElementBy(driver, "class", "title-highlight");
         String title =offers.get(0).getText();
@@ -722,7 +726,7 @@ class Sdi2223Entrega2TestApplicationTests {
         Assertions.assertEquals(403, response.getStatusCode());
 
          */
-        driver.navigate().to(URL+"/apiclient/client.html?w=chats");
+        driver.navigate().to(URL+"/apiclient/client.html?w=conversations");
         PO_View.checkElementBy(driver, "id", "widget-login");
     }
 
