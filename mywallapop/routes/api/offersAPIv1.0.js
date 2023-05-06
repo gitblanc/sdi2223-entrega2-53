@@ -156,24 +156,34 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
                     if (offer == null) {
                         isValid = false;
                     }
-                })
+                    if (isValid) {
+                        messagesRepository.getMessages({chat: message.chatId},{}).then(messages => {
+                            if (messages.length === 0 && message.sender === offer.seller) {
+                                res.status(404);
+                                res.json({
+                                    message: "No puedes enviar el primer mensaje a una conversación si eres el propietario de la oferta."
+                                })
+                            } else {
+                                messagesRepository.insertMessage(message, function (messageId) {
+                                    if (messageId == null) {
+                                        res.send("Se ha producido un error al añadir el mensaje")
+                                    } else {
+                                        res.status(201);
+                                        res.json({
+                                            message: "Mansaje añadido correctamente.",
+                                            _id: messageId
+                                        })
+                                    }
+                                })
+                            }
 
-                if (isValid) {
-                    messagesRepository.insertMessage(message, function (messageId) {
-                        if (messageId == null) {
-                            res.send("Se ha producido un error al añadir el mensaje")
-                        } else {
-                            res.status(201);
-                            res.json({
-                                message: "Mansaje añadido correctamente.",
-                                _id: messageId
-                            })
-                        }
-                    })
-                } else {
-                    res.status(500);
-                    res.send("Oferta no encontrada.")
-                }
+                        })
+
+                    } else {
+                        res.status(500);
+                        res.send("Oferta no encontrada.")
+                    }
+                })
             } catch (e) {
                 res.status(500);
                 res.json({error: "Se ha producido un error al intentar añadir el mensaje: " + e})

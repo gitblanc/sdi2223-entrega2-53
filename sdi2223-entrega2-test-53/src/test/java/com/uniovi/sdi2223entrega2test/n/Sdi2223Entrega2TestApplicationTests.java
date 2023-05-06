@@ -23,13 +23,13 @@ import java.util.List;
 class Sdi2223Entrega2TestApplicationTests {
     // Windows
     static String PathFirefox = "C:\\Program Files\\Mozilla Firefox\\firefox.exe";
-    //static String Geckodriver = "C:\\Users\\mines\\Desktop\\nodejs\\geckodriver-v0.30.0-win64.exe";
+    static String Geckodriver = "C:\\Users\\mines\\Desktop\\nodejs\\geckodriver-v0.30.0-win64.exe";
     //static String Geckodriver = "C:\\Users\\uo277369\\Desktop\\geckodriver-v0.30.0-win64.exe";
     // MACOSX
     //static String PathFirefox = "/Applications/Firefox.app/Contents/MacOS/firefox-bin";
     //static String Geckodriver = "/Users/USUARIO/selenium/geckodriver-v0.30.0-macos";
 
-    static String Geckodriver = "C:\\Users\\Diego\\Documents\\Universidad\\4º curso\\2º Semestre\\SDI\\PL-SDI-Sesión5-material\\geckodriver-v0.30.0-win64.exe";
+    //static String Geckodriver = "C:\\Users\\Diego\\Documents\\Universidad\\4º curso\\2º Semestre\\SDI\\PL-SDI-Sesión5-material\\geckodriver-v0.30.0-win64.exe";
 
 
 //Común a Windows y a MACOSX
@@ -1012,6 +1012,145 @@ class Sdi2223Entrega2TestApplicationTests {
     }
 
     /**
+     * [Prueba43] Enviar un primer mensaje una oferta propia y comprobar que no se inicia la conversación.
+     * En este caso de prueba, el propietario de la oferta tendrá que identificarse (S1), enviar un mensaje
+     * para una oferta propia (S3) y comprobar que el mensaje no se almacena (S4).
+     */
+    @Test
+    @Order(43)
+    void PR43(){
+        final String loginURL = "http://localhost:8081/api/v1.0/users/login";
+        final String offersURL = "http://localhost:8081/api/v1.0/offers";
+        final String chatURL = "http://localhost:8081/api/v1.0/offers/chats/byoffer/";
+        final String newMessageURL = "http://localhost:8081/api/v1.0/chat/";
+
+        // preparo login
+        RequestSpecification request = RestAssured.given();
+        JSONObject requestParams = new JSONObject();
+        requestParams.put("email", "user08@email.com");
+        requestParams.put("password", "user08");
+        request.header("Content-Type", "application/json");
+        request.body(requestParams.toJSONString());
+
+        // hago login y guardo el token
+        Response response = request.post(loginURL);
+        JsonPath jsonPathEvaluator = response.jsonPath();
+        String token = jsonPathEvaluator.get("token");
+        String sessionCookie = response.getCookie("connect.sid");
+
+        // preparo consulta
+        request = RestAssured.given();
+        request.header("Content-Type", "application/json");
+        request.header("token", token);
+        request.cookie("connect.sid", sessionCookie);
+
+        // id conocido de mi oferta
+        String offerID = "6456bba94dec7434ef3c3a8f";
+
+        // consulta a nuevo chat
+        response = request.get(chatURL+offerID+"?otherUser=user08@email.com");
+        Assertions.assertEquals(200, response.getStatusCode());
+        jsonPathEvaluator = response.jsonPath();
+        String chatID = jsonPathEvaluator.get("chat");
+
+        // consulta a enviar mensaje
+        requestParams = new JSONObject();
+        requestParams.put("messageText", "PRUEBA");
+        request.body(requestParams.toJSONString());
+        response = request.post(newMessageURL+offerID+"/"+chatID);
+
+        // compruebo codigo respuesta
+        Assertions.assertEquals(404, response.getStatusCode());
+    }
+
+    /**
+     * [Prueba44] Obtener los mensajes de una conversación. Esta prueba consistirá en comprobar que el
+     * servicio retorna el número correcto de mensajes para una conversación. El ID de la conversación
+     * deberá conocerse a priori. Por lo tanto, se tendrá primero que invocar al servicio de identificación
+     * (S1), y solicitar el listado de mensajes de una conversación de id conocido a continuación (S4),
+     * comprobando que se retornan los mensajes adecuados.
+     */
+    @Test
+    @Order(44)
+    void PR44(){
+        final String loginURL = "http://localhost:8081/api/v1.0/users/login";
+        final String messagesURL = "http://localhost:8081/api/v1.0/offers/chats/";
+
+        // preparo login
+        RequestSpecification request = RestAssured.given();
+        JSONObject requestParams = new JSONObject();
+        requestParams.put("email", "user07@email.com");
+        requestParams.put("password", "user07");
+        request.header("Content-Type", "application/json");
+        request.body(requestParams.toJSONString());
+
+        // hago login y guardo el token
+        Response response = request.post(loginURL);
+        JsonPath jsonPathEvaluator = response.jsonPath();
+        String token = jsonPathEvaluator.get("token");
+        String sessionCookie = response.getCookie("connect.sid");
+
+        // preparo consulta
+        request = RestAssured.given();
+        request.header("Content-Type", "application/json");
+        request.header("token", token);
+        request.cookie("connect.sid", sessionCookie);
+
+        // id conocido del chat
+        String chatID = "1435bba94dec7434ef3c3a7a";
+
+        // consulta a nuevo chat
+        response = request.get(messagesURL+chatID);
+        // compruebo codigo respuesta
+        Assertions.assertEquals(200, response.getStatusCode());
+        jsonPathEvaluator = response.jsonPath();
+        ArrayList<LinkedHashMap<String, String>> chats = jsonPathEvaluator.get("messages");
+        Assertions.assertEquals(1, chats.size());
+    }
+
+    /**
+     * [Prueba45] Obtener la lista de conversaciones de un usuario. Esta prueba consistirá en comprobar que
+     * el servicio retorna el número correcto de conversaciones para dicho usuario. Por lo tanto, se tendrá
+     * primero que invocar al servicio de identificación (S1), y solicitar el listado de conversaciones a
+     * continuación (S5) comprobando que se retornan las conversaciones adecuadas.
+     */
+    @Test
+    @Order(45)
+    void PR45(){
+        final String loginURL = "http://localhost:8081/api/v1.0/users/login";
+        final String chatsURL = "http://localhost:8081/api/v1.0/offers/chats/list";
+
+        // preparo login
+        RequestSpecification request = RestAssured.given();
+        JSONObject requestParams = new JSONObject();
+        requestParams.put("email", "user07@email.com");
+        requestParams.put("password", "user07");
+        request.header("Content-Type", "application/json");
+        request.body(requestParams.toJSONString());
+
+        // hago login y guardo el token
+        Response response = request.post(loginURL);
+        JsonPath jsonPathEvaluator = response.jsonPath();
+        String token = jsonPathEvaluator.get("token");
+        String sessionCookie = response.getCookie("connect.sid");
+
+        // preparo consulta a chats
+        request = RestAssured.given();
+        request.header("Content-Type", "application/json");
+        request.header("token", token);
+        request.cookie("connect.sid", sessionCookie);
+
+        // consulta a chats
+        response = request.get(chatsURL);
+        // compruebo resultado y codigo respuesta
+        Assertions.assertEquals(200, response.getStatusCode());
+        jsonPathEvaluator = response.jsonPath();
+
+        ArrayList<LinkedHashMap<String, String>> chats = jsonPathEvaluator.get("chats");
+        Assertions.assertEquals(1, chats.size());
+    }
+
+    /**
      * [Prueba48] Inicio de sesión con datos válidos.
      */
     @Test
@@ -1140,7 +1279,7 @@ class Sdi2223Entrega2TestApplicationTests {
     void PR54(){
         // hago login
         driver.navigate().to(URL+"/apiclient/client.html");
-        PO_LoginView.fillLoginForm(driver, "user08@email.com", "user08");
+        PO_LoginView.fillLoginForm(driver, "user14@email.com", "user14");
 
         // entro a listado de conversaciones
         List<WebElement> elements = PO_OwnOffersView.checkElementBy(driver, "free",

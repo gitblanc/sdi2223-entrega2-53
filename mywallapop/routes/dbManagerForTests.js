@@ -58,6 +58,20 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
                         buyer: (i === 14 && j === 1)?"user07@email.com":null,
                         sold: i === 14 && j === 1
                     }
+                    // Si oferta-user08-n1
+                    if (i === 8 && j ===1) {
+                        offer = {
+                            _id: ObjectId("6456bba94dec7434ef3c3a8f"),
+                            title: "Oferta-user"+emailNumber+"-n"+j,
+                            description: "testsBorrar",
+                            price: (j*10).toString(),
+                            date: new Date().toLocaleDateString(),
+                            seller: usersI[i-1].email,
+                            // La primera oferta del usuario 14 estará vendida al 07
+                            buyer: (i === 14 && j === 1)?"user07@email.com":null,
+                            sold: i === 14 && j === 1
+                        }
+                    }
                     offers.push(offer);
                 }
             }
@@ -69,7 +83,27 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
                         offerId: offer._id
                     }
                     offersRepository.buyOffer(purchase, () => {
-                        res.send("datos de los tests insertados");
+                        // Chat entre 7 y 14 con la oferta user14-n1
+                        let chat = {
+                            _id: ObjectId("1435bba94dec7434ef3c3a7a"),
+                            user: "user07@email.com",
+                            offer: offer._id
+                        }
+                        chatsRepository.insertChat(chat).then(() => {
+                            let message = {
+                                sender: chat.user,
+                                text: "PRUEBA",
+                                date: new Date().toLocaleDateString(),
+                                read: false,
+                                chatId: chat._id
+                            }
+                            messagesRepository.insertMessage(message, () => {
+                                res.send("datos de los tests insertados");
+                            })
+
+                        }).catch(error => {
+                            res.send("Error al insertar chat de los tests " + error);
+                        })
                     })
 
                 })
@@ -95,7 +129,7 @@ module.exports = function (app, offersRepository, usersRepository, chatsReposito
                 let filterPurchases = {$or:[{user: "user14@email.com"},{user: "user09@email.com"},
                         {user: "user08@email.com"},{user: "user07@email.com"}]};
                 offersRepository.deletePurchases(filterPurchases, options).then(() => {
-                    let filterChats = {$or:[{user: "user01@email.com"}, {user: "user08@email.com"}]};
+                    let filterChats = {$or:[{user: "user01@email.com"}, {user: "user08@email.com"}, {user: "user07@email.com"}]};
                     chatsRepository.deleteChats(filterChats, options).then(() => {
                         let filterMessages = {text: "PRUEBA"};
                         messagesRepository.deleteMessages(filterMessages, options).then(() => {
