@@ -68,6 +68,8 @@ logsRepository.init(app, MongoClient)
 
 // _________ USER_SESSION_CHECK _____________
 app.use("/users/list", userSessionRouter);
+app.use("/users/logs", userSessionRouter);
+app.use("/offers/add",userSessionRouter);
 app.use("/offers/buy",userSessionRouter);
 app.use("/purchases",userSessionRouter);
 app.use("/publications",userSessionRouter);
@@ -88,9 +90,9 @@ var offersRouter = require('./routes/offers');
 const appLogger = require('./logger');
 
 //ROUTES
-require("./routes/users.js")(app, usersRepository,offersRepository, appLogger);
+require("./routes/users.js")(app, usersRepository,offersRepository, chatsRepository,messagesRepository, appLogger);
 require("./routes/offers.js")(app, offersRepository, usersRepository, appLogger);
-require("./routes/dbManagerForTests.js")(app, offersRepository, usersRepository);
+require("./routes/dbManagerForTests.js")(app, offersRepository, usersRepository, chatsRepository, messagesRepository);
 
 //ROUTES API
 require("./routes/api/offersAPIv1.0.js")(app, offersRepository, usersRepository, chatsRepository, messagesRepository);

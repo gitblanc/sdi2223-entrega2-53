@@ -1,11 +1,12 @@
 const {ObjectId} = require("mongodb");
-module.exports = function (app, offersRepository, usersRepository) {
+module.exports = function (app, offersRepository, usersRepository, chatsRepository, messagesRepository) {
 
     /**
      * Inserta usuarios con nombre 'testsBorrar' y ofertas con título 'testsBorrar' en la base de datos
      */
     app.get('/tests/insert', function (req, res) {
         let users = [];
+        // Estándares
         for (let i = 1; i < 16; i++) {
             let emailNumber = i.toString();
             if (i < 10) {
@@ -18,12 +19,25 @@ module.exports = function (app, offersRepository, usersRepository) {
                 name: "testsBorrar",
                 surname: "testsBorrar",
                 birthdate: "2001-01-01",
-                amount: 100,
+                amount: i === 10?0:100,
                 role: 'Usuario Estándar',
                 password: securePassword
             }
             users.push(userToSave);
         }
+        // Admin
+        let password = "admin";
+        let securePassword = app.get("crypto").createHmac('sha256', app.get('clave')).update(password).digest('hex');
+        let admin = {
+            email: "admin@email.com",
+            name: "testsBorrar",
+            surname: "testsBorrar",
+            birthdate: "2001-01-01",
+            amount: 100,
+            role: 'Administrador',
+            password: securePassword
+        }
+        users.push(admin);
         usersRepository.insertUsers(users).then(() => {
             let usersI = users;
             // insertar ofertas
@@ -40,8 +54,8 @@ module.exports = function (app, offersRepository, usersRepository) {
                         price: (j*10).toString(),
                         date: new Date().toLocaleDateString(),
                         seller: usersI[i-1].email,
-                        buyer: null,
-                        // La primera oferta del usuario 14 estará marcada como vendida
+                        // La primera oferta del usuario 14 estará vendida al 07
+                        buyer: (i === 14 && j === 1)?"user07@email.com":null,
                         sold: i === 14 && j === 1
                     }
                     offers.push(offer);
@@ -49,7 +63,17 @@ module.exports = function (app, offersRepository, usersRepository) {
             }
             offersRepository.insertOffers(offers).then(() => {
 
-                res.send("datos de los tests insertados");
+                offersRepository.findOffer({title:"Oferta-user14-n1"}, {}).then(offer => {
+                    let purchase = {
+                        user: "user07@email.com",
+                        offerId: offer._id
+                    }
+                    offersRepository.buyOffer(purchase, () => {
+                        res.send("datos de los tests insertados");
+                    })
+
+                })
+
 
             }).catch(error => {
                 res.send("Error al insertar ofertas de los tests " + error);
@@ -68,9 +92,25 @@ module.exports = function (app, offersRepository, usersRepository) {
         usersRepository.deleteUsers(filter, options).then(() => {
             let filterOffers = {description: "testsBorrar"};
             offersRepository.deleteOffers(filterOffers, options).then(() => {
+                let filterPurchases = {$or:[{user: "user14@email.com"},{user: "user09@email.com"},
+                        {user: "user08@email.com"},{user: "user07@email.com"}]};
+                offersRepository.deletePurchases(filterPurchases, options).then(() => {
+                    let filterChats = {$or:[{user: "user01@email.com"}, {user: "user08@email.com"}]};
+                    chatsRepository.deleteChats(filterChats, options).then(() => {
+                        let filterMessages = {text: "PRUEBA"};
+                        messagesRepository.deleteMessages(filterMessages, options).then(() => {
 
-                res.send("datos de los tests quitados");
+                            res.send("datos de los tests quitados");
 
+                        }).catch(error => {
+                            res.send("Error al quitar los mensajes de los tests " + error);
+                        })
+                    }).catch(error => {
+                        res.send("Error al quitar los chats de los tests " + error);
+                    })
+                }).catch(error => {
+                    res.send("Error al quitar las compras de los tests " + error);
+                })
             }).catch(error => {
                 res.send("Error al quitar los ofertas de los tests " + error);
             });

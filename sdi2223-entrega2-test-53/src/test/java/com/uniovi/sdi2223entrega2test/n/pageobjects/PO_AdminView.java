@@ -41,5 +41,4 @@ public class PO_AdminView extends PO_NavView {
 			checkElementBy(driver, "id", "pl-" + i).get(0).click();
 		}
 	}
-
 }

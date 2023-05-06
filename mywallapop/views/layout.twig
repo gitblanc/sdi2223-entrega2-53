@@ -31,13 +31,14 @@
         <li id="mybuy"><a href="/purchases">Compras</a></li>
         {% if email == "admin@email.com" %}
           <li id="logs"><a href="/users/logs">Logs</a></li>
+          <li id="userslist"><a href="/users/list">Lista de usuarios</a></li>
         {% endif %}
       </ul>
       <ul class="nav navbar-nav navbar-right">
 
         {% if email != null %}
           <li style="color:white ; padding:1em">{{email}}</li>
-          <li style="color:white ; padding:1em">{{amount}} €</li>
+          <li id="myAmount" style="color:white ; padding:1em">{{amount}} €</li>
           <li><a href="/users/logout"><span class="glyphicon glyphicon-user"></span> Desconectarse</a></li>
         {% else %}
           <li><a href="/users/signup"><span class="glyphicon glyphicon-user"></span> Registrate</a></li>

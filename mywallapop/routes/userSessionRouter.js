@@ -1,6 +1,10 @@
 const express = require('express');
 const userSessionRouter = express.Router();
 const appLogger = require('../logger');
+
+/**
+ * Comprueba que el usuario esté logeado para entrar a determinadas vistas
+ */
 userSessionRouter.use(function (req, res, next) {
     console.log("routerUsuarioSession");
     if (req.session.user) {
