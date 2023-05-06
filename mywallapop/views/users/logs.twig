@@ -1,0 +1,44 @@
+{% extends "layout.twig" %}
+{% block title %}MyWallaPop{% endblock %}
+{% block main_container %}
+    <h2>Listado de logs</h2>
+    <div>
+        <form id="filterLogs" action="/users/logs" method="POST">
+            <label for="typeFilter">Filtrar por tipo:</label>
+            <select id="typeFilter" name="typeFilter">
+                <option value="todo">TODO</option>
+                <option value="pet">PET</option>
+                <option value="login-ex">LOGIN-EX</option>
+                <option value="logout">LOGOUT</option>
+                <option value="alta">ALTA</option>
+                <option value="pet-err">PET-ERR</option>
+                <option value="login-err">LOGIN-ERR</option>
+                <option value="logout-err">LOGOUT-ERR</option>
+                <option value="alta-err">ALTA-ERR</option>
+            </select>
+            <button type="submit">Filtrar</button>
+        </form>
+        <form id="deleteLogs" action="/users/logs/delete" method="POST">
+            <button id="buttonDeleteLogs" type="submit" style="float:right;"> Borrar logs</button>
+        </form>
+    </div>
+    <table class="table table-hover" id="tableLogs">
+        <thead>
+        <tr>
+            <th scope="col">Tipo</th>
+            <th scope="col">Mensaje</th>
+            <th scope="col">Fecha</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for log in logs %}
+            <tr>
+                <td>{{ log.type }}</td>
+                <td>{{ log.message }}</td>
+                <td>{{ (log.date/1000)|date("Y-m-d H:i:s") }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+{% endblock %}

@@ -1,0 +1,80 @@
+<div id="widget-offers">
+    <h2>Listado de ofertas</h2>
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <th>Título</th>
+            <th>Detalle</th>
+            <th>Precio €</th>
+            <th>Fecha de publicación</th>
+            <th>Email de vendedor</th>
+            <th>Conversación</th>
+            <th class="col-md-1"></th>
+        </tr>
+        </thead>
+        <tbody id="offersTableBody"></tbody>
+    </table>
+</div>
+<script>
+    window.history.pushState("", "", "/apiclient/client.html?w=offers");
+    var offers;
+
+    function loadOffers() {
+        $.ajax({
+            url: URLbase + "/offers",
+            type: "GET",
+            data: {},
+            dataType: "json",
+            headers: {token: token},
+            success: function (response) {
+                offers = response.offers;
+                updateOffersTable(offers);
+            },
+            error: function (error) {
+                $("#main-container").load("widget-login.html");
+            },
+        });
+    }
+
+    function updateOffersTable(offers) {
+        $("#offersTableBody").empty(); // Vaciar la tabla
+        for (let i = 0; i < offers.length; i++) {
+            $("#offersTableBody").append(
+                "<tr>" +
+                "<td id='" + offers[i].title+'-'+offers[i].seller + "'>" + offers[i].title + "</td>" +
+                "<td>" + offers[i].description + "</td>" +
+                "<td>" + offers[i].price + "</td>" +
+                "<td>" + offers[i].date + "</td>" +
+                "<td>" + offers[i].seller + "</td>" +
+                "<td><button id='" + offers[i].title+'-'+offers[i].seller + "'" +
+                    " onclick='openConversation(" + JSON.stringify(offers[i]) + ")'>" + "Chat" + "</button></td>" +
+                "</tr>"
+            );
+        }
+    }
+
+    function openConversation(offer) {
+        $.ajax({
+            url: '/api/v1.0/offers/chats/byoffer/' + offer._id + '/?otherUser=' + offer.seller,
+            type: 'GET',
+            data: {},
+            dataType: 'json',
+            headers: {
+                "token": token
+            },
+            success: function (response) {
+                messages = response.messages;//we store the chat content (messages and )
+                chatId = response.chat;
+                offerOfChat = offer._id;
+                $("#main-container").load("./widget-chat.html");
+            },
+            error: function (error) {
+                console.log(error);
+                $("#main-container").load("./widget-offers.html");
+            }
+        });
+    }
+
+    loadOffers();
+
+</script>
