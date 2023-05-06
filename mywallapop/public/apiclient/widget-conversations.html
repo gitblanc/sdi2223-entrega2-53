@@ -1,0 +1,88 @@
+<div id="widget-conversations">
+    <h2>Mis conversaciones</h2>
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <th>Ofertante</th>
+            <th>Título</th>
+            <th>Conversación</th>
+            <th class="col-md-1"></th>
+        </tr>
+        </thead>
+        <tbody id="conversationsTableBody"></tbody>
+    </table>
+</div>
+<script>
+    window.history.pushState("", "", "/apiclient/client.html?w=conversations");
+    function openConversation(chat, chatOffer) {
+        $.ajax({
+            url:  URLbase + "/offers/chats/" + chat,
+            type: 'GET',
+            data: {},
+            dataType: 'json',
+            headers: {
+                "token": token
+            },
+            success: function (response) {
+                messages = response.messages;
+                chatId = chat;
+                offerOfChat = chatOffer;
+                $("#main-container").load("./widget-chat.html");
+            },
+            error: function (error) {
+                console.log(error);
+                $("#main-container").load("./widget-conversations.html");
+            }
+        });
+    }
+
+    function loadConversations() {
+        $.ajax({
+            url: URLbase + "/offers/chats/list",
+            type: "GET",
+            data: {},
+            dataType: "json",
+            headers: {token: token},
+            success: function (response) {
+                conversations = response.chats;
+                loadConversationsToTable();
+            },
+            error: function (error) {
+                $("#main-container").load("widget-login.html");
+            },
+        });
+    }
+
+    async function findTitleOfOffer(offerId, callback) {
+        $.ajax({
+            url: URLbase + "/offers/" + offerId,
+            type: "GET",
+            data: {},
+            dataType: "json",
+            headers: {token: token},
+            success: function (response) {
+                callback(response.offer[0].title);
+            },
+            error: function (error) {
+                callback("Sin título");
+            },
+        });
+    }
+
+    function loadConversationsToTable() {
+        $("#conversationsTableBody").empty(); // Vaciar la tabla
+        for (let i = 0; i < conversations.length; i++) {
+            findTitleOfOffer(conversations[i].offer, function (title) {
+                $("#conversationsTableBody").append(
+                    "<tr>" +
+                    "<td>" + conversations[i].user + "</td>" +
+                    "<td>" + title + "</td>" +
+                    "<td><button onclick=\"openConversation('" + conversations[i]._id + "', '" + conversations[i].offer + "')\">" + "Chat" + "</button></td>"
+                    + "</tr>"
+                );
+            });
+        }
+    }
+
+    loadConversations();
+</script>

@@ -5,6 +5,7 @@ import com.uniovi.sdi2223entrega2test.n.util.SeleniumUtils;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
+import org.codehaus.groovy.runtime.StringGroovyMethods;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.*;
 import org.openqa.selenium.By;
@@ -20,9 +21,14 @@ class Sdi2223Entrega2TestApplicationTests {
     // Windows
     static String PathFirefox = "C:\\Program Files\\Mozilla Firefox\\firefox.exe";
     static String Geckodriver = "C:\\Users\\mines\\Desktop\\nodejs\\geckodriver-v0.30.0-win64.exe";
+    //static String Geckodriver = "C:\\Users\\uo277369\\Desktop\\geckodriver-v0.30.0-win64.exe";
     // MACOSX
     //static String PathFirefox = "/Applications/Firefox.app/Contents/MacOS/firefox-bin";
     //static String Geckodriver = "/Users/USUARIO/selenium/geckodriver-v0.30.0-macos";
+
+    //static String Geckodriver = "C:\\Users\\Diego\\Documents\\Universidad\\4º curso\\2º Semestre\\SDI\\PL-SDI-Sesión5-material\\geckodriver-v0.30.0-win64.exe";
+
+
 //Común a Windows y a MACOSX
     static WebDriver driver = getDriver(PathFirefox, Geckodriver);
     static String URL = "http://localhost:8081";
@@ -77,6 +83,18 @@ class Sdi2223Entrega2TestApplicationTests {
         Assertions.assertEquals(checkText, result.get(0).getText());
 
         PO_LoginView.logout(driver);
+
+        // Borrar nuevo usuario
+        PO_LoginView.loginAsAdmin(driver);
+        // Ir a la última página
+        for (int i = 2; i < 5; i++) {
+            PO_AdminView.checkElementBy(driver, "id", "pl-" + i).get(0).click();
+        }
+
+        // Lo borramos no alterar el número total de usuarios para los siguientes tests
+        List<WebElement> usersList = PO_AdminView.getUsersList(driver);
+        PO_AdminView.deleteUsers(driver, usersList.size()-1);
+
     }
 
     /**
@@ -112,7 +130,7 @@ class Sdi2223Entrega2TestApplicationTests {
     @Order(4)
     public void PR04() {
         PO_HomeView.clickOption(driver, "signup", "class", "btn btn-primary");
-        PO_SignUpView.fillForm(driver, "emailvalido@pruebas.com", "aaaa", "bbbb",
+        PO_SignUpView.fillForm(driver, "user01@email.com", "aaaa", "bbbb",
                 "2001-01-01", "77777", "77777");
         String checkText = "Se ha producido un error al registrar el usuario, email ya existe.";
         List<WebElement> result = PO_View.checkElementBy(driver, "text", checkText);
@@ -309,14 +327,19 @@ class Sdi2223Entrega2TestApplicationTests {
         PO_OwnOffersView.clickAddOfferOption(driver);
         //Ahora vamos a rellenar la oferta.
         String checkText = "Oferta nueva 1";
-        PO_AddOfferView.fillFormAddOffer(driver, checkText, "testsBorrar", "100");
+        PO_AddOfferView.fillFormAddOffer(driver, checkText, "testsBorrar", "100", false);
         // Ir a la última página
         for (int i = 2; i < 4; i++) {
-            PO_AdminView.checkElementBy(driver, "id", "pl-" + i).get(0).click();
+            PO_OwnOffersView.checkElementBy(driver, "id", "pl-" + i).get(0).click();
         }
         //Comprobamos que aparece la oferta en la página
         List<WebElement> elements = PO_View.checkElementBy(driver, "text", checkText);
         Assertions.assertEquals(checkText, elements.get(0).getText());
+
+        // La borramos para no alterar el número total de ofertas para los siguientes tests
+        List<WebElement> offers = PO_OwnOffersView.getOffersList(driver);
+        WebElement offer = offers.get(offers.size()-1);
+        offer.findElement(By.className("offer-delete")).click();
 
         PO_LoginView.logout(driver);
     }
@@ -331,7 +354,7 @@ class Sdi2223Entrega2TestApplicationTests {
         PO_LoginView.login(driver, "user11@email.com", "user11", "Lista de ofertas propias");
 
         PO_OwnOffersView.clickAddOfferOption(driver);
-        PO_AddOfferView.fillFormAddOffer(driver, "  ", "testsBorrar", "-100");
+        PO_AddOfferView.fillFormAddOffer(driver, "  ", "testsBorrar", "-100", false);
         String checkText = "Se ha producido un error al añadir la oferta, título vacío";
         List<WebElement> result = PO_AddOfferView.checkElementBy(driver, "text", checkText);
         Assertions.assertEquals(checkText , result.get(0).getText());
@@ -408,9 +431,19 @@ class Sdi2223Entrega2TestApplicationTests {
     void PR21(){
         PO_LoginView.login(driver, "user12@email.com", "user12", "Lista de ofertas propias");
 
-        // Borrar oferta de otro usuario, pero no salen en la lista de ofertas propias
-        Assertions.fail("Prueba no implementada");
-
+        // Ir a la lista de todas las ofertas
+        PO_OwnOffersView.clickAllOffersOption(driver);
+        // Pillar el id de una oferta de otro usuario
+        String idOffer = PO_AllOffersView.getFirstOfferId(driver);
+        // Invocar el delete con ese id
+        driver.navigate().to(URL+"/offers/delete/"+idOffer);
+        // Comprobar el mensaje de error
+        String checkText = "Acceso denegado";
+        PO_OwnOffersView.checkElementBy(driver, "text", checkText);
+        // Comprobar que no se ha borrado
+        PO_OwnOffersView.clickAllOffersOption(driver);
+        String idOfferAfterDeletion = PO_AllOffersView.getFirstOfferId(driver);
+        Assertions.assertEquals(idOffer, idOfferAfterDeletion);
         PO_LoginView.logout(driver);
     }
 
@@ -450,14 +483,14 @@ class Sdi2223Entrega2TestApplicationTests {
         Assertions.assertEquals(5, tableRows.size());
 
         // Ir a la última página
-        for (int i = 2; i < 23; i++) {
+        for (int i = 2; i < 18; i++) {
             PO_AllOffersView.checkElementBy(driver, "id", "pl-" + i).get(0).click();
         }
 
         // Estamos en la última página
         tableRows = PO_AllOffersView.getOffersList(driver);
 
-        Assertions.assertEquals(4, tableRows.size());
+        Assertions.assertEquals(5, tableRows.size());
 
         PO_LoginView.logout(driver);
     }
@@ -502,6 +535,389 @@ class Sdi2223Entrega2TestApplicationTests {
         Assertions.assertEquals("Oferta-user09-n10", title2);
 
         PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba26] Sobre una búsqueda determinada (a elección de desarrollador), comprar una oferta que
+     * deja un saldo positivo en el contador del comprobador. Y comprobar que el contador se actualiza
+     * correctamente en la vista del comprador.
+     */
+    @Test
+    @Order(26)
+    void PR26(){
+        PO_LoginView.login(driver, "user14@email.com", "user14", "Lista de ofertas propias");
+
+        int amountBefore = PO_OwnOffersView.getMyAmount(driver);
+        PO_OwnOffersView.clickAllOffersOption(driver);
+        PO_AllOffersView.writeIntoSearchBar(driver, "OFERTA-USER09-N1");
+        int price = PO_AllOffersView.buyFirstOffer(driver);
+        int amountAfter = PO_OwnOffersView.getMyAmount(driver);
+        Assertions.assertEquals(amountAfter, amountBefore - price);
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba27] Sobre una búsqueda determinada (a elección de desarrollador), comprar una oferta que
+     * deja un saldo 0 en el contador del comprobador. Y comprobar que el contador se actualiza
+     * correctamente en la vista del comprador.
+     */
+    @Test
+    @Order(27)
+    void PR27(){
+        PO_LoginView.login(driver, "user09@email.com", "user09", "Lista de ofertas propias");
+
+        int amountBefore = PO_OwnOffersView.getMyAmount(driver);
+        PO_OwnOffersView.clickAllOffersOption(driver);
+        PO_AllOffersView.writeIntoSearchBar(driver, "OFERTA-USER14-N10");
+        int price = PO_AllOffersView.buyFirstOffer(driver);
+        int amountAfter = PO_OwnOffersView.getMyAmount(driver);
+        Assertions.assertEquals(amountAfter, amountBefore - price);
+        Assertions.assertEquals(amountAfter, 0);
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba28] Sobre una búsqueda determinada (a elección de desarrollador), intentar comprar una oferta
+     * que esté por encima de saldo disponible del comprador. Y comprobar que se muestra el mensaje
+     * de saldo no suficiente.
+     */
+    @Test
+    @Order(28)
+    void PR28(){
+        PO_LoginView.login(driver, "user08@email.com", "user08", "Lista de ofertas propias");
+
+        PO_OwnOffersView.clickAllOffersOption(driver);
+        // Primero hacemos una compra que nos deje por debajo de 60
+        PO_AllOffersView.writeIntoSearchBar(driver, "Oferta-USER14-N5");
+        PO_AllOffersView.buyFirstOffer(driver);
+        int amountBefore = PO_OwnOffersView.getMyAmount(driver);
+        // Compramos una oferta de 60
+        PO_OwnOffersView.clickAllOffersOption(driver);
+        PO_AllOffersView.writeIntoSearchBar(driver, "OFERTA-USER14-N6");
+        PO_AllOffersView.buyFirstOffer(driver);
+        int amountAfter = PO_OwnOffersView.getMyAmount(driver);
+        String checkText = "Error comprar la oferta: dinero insuficiente";
+        List<WebElement> elements = PO_OwnOffersView.checkElementBy(driver, "text", checkText);
+        Assertions.assertEquals(1, elements.size());
+        Assertions.assertEquals(checkText, elements.get(0).getText());
+        Assertions.assertEquals(amountAfter, amountBefore);
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba29] Ir a la opción de ofertas compradas del usuario y mostrar la lista. Comprobar que aparecen
+     * las ofertas que deben aparecer
+     */
+    @Test
+    @Order(29)
+    void PR29(){
+        PO_LoginView.login(driver, "user07@email.com", "user07", "Lista de ofertas propias");
+
+        PO_OwnOffersView.clickPurchasesOption(driver);
+        List<WebElement> purchases = PO_OwnOffersView.getOffersList(driver);
+        Assertions.assertEquals(1, purchases.size());
+        WebElement purchase = purchases.get(0);
+        String title = purchase.findElements(By.tagName("td")).get(0).getText();
+        Assertions.assertEquals("Oferta-user14-n1", title);
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba30] Al crear una oferta, marcar dicha oferta como destacada y a continuación comprobar: i)
+     * que aparece en el listado de ofertas destacadas para los usuarios y que el saldo del usuario se
+     * actualiza adecuadamente en la vista del ofertante (comprobar saldo antes y después, que deberá
+     * diferir en 20€).
+     */
+    @Test
+    @Order(30)
+    void PR30(){
+        PO_LoginView.login(driver, "user11@email.com", "user11", "Lista de ofertas propias");
+
+        PO_OwnOffersView.clickAddOfferOption(driver);
+        int amountBefore = PO_OwnOffersView.getMyAmount(driver);
+        //Ahora vamos a rellenar la oferta.
+        String checkText = "Oferta nueva destacada";
+        PO_AddOfferView.fillFormAddOffer(driver, checkText, "testsBorrar", "100", true);
+        int amountAfter = PO_OwnOffersView.getMyAmount(driver);
+        Assertions.assertEquals(amountAfter, amountBefore - 20);
+        PO_OwnOffersView.clickAllOffersOption(driver);
+        String title =PO_AllOffersView.getOffersList(driver).get(0).findElements(By.tagName("td")).get(0).getText();
+        Assertions.assertEquals(title, checkText);
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba31] Sobre el listado de ofertas de un usuario con más de 20 euros de saldo, pinchar en el enlace
+     * Destacada y a continuación comprobar: i) que aparece en el listado de ofertas destacadas para los
+     * usuarios y que el saldo del usuario se actualiza adecuadamente en la vista del ofertante (comprobar
+     * saldo antes y después, que deberá diferir en 20€ ).
+     */
+    @Test
+    @Order(31)
+    void PR31(){
+        PO_LoginView.login(driver, "user11@email.com", "user11", "Lista de ofertas propias");
+
+        String checkText = "Oferta-user11-n1";
+        int amountBefore = PO_OwnOffersView.getMyAmount(driver);
+        //Ahora vamos a destacar la oferta.
+        PO_OwnOffersView.checkElementBy(driver, "free", "/html/body/div/table/tbody/tr[1]/td[6]/a").get(0).click();
+        // Comprobamos
+        int amountAfter = PO_OwnOffersView.getMyAmount(driver);
+        Assertions.assertEquals(amountAfter, amountBefore - 20);
+        PO_OwnOffersView.clickAllOffersOption(driver);
+        List<WebElement> offers = PO_OwnOffersView.checkElementBy(driver, "class", "title-highlight");
+        String title =offers.get(0).getText();
+        Assertions.assertEquals(title, checkText);
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba32] Sobre el listado de ofertas de un usuario con menos de 20 euros de saldo, pinchar en el
+     * enlace Destacada y a continuación comprobar que se muestra el mensaje de saldo no suficiente.
+     */
+    @Test
+    @Order(32)
+    void PR32(){
+        PO_LoginView.login(driver, "user10@email.com", "user10", "Lista de ofertas propias");
+
+        //Ahora vamos a destacar la oferta.
+        PO_OwnOffersView.checkElementBy(driver, "free", "/html/body/div/table/tbody/tr[1]/td[6]/a").get(0).click();
+        // Comprobamos
+        String checkText= "No tienes al menos 20 euros";
+        WebElement error = PO_OwnOffersView.checkElementBy(driver, "text", checkText).get(0);
+        Assertions.assertEquals(error.getText(), checkText);
+
+        driver.navigate().to(URL+"/publications");
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba33] Intentar acceder sin estar autenticado a la opción de listado de usuarios. Se deberá volver
+     * al formulario de login.
+     */
+    @Test
+    @Order(33)
+    void PR33(){
+        driver.navigate().to(URL+"/users/list");
+
+        PO_View.checkElementBy(driver, "text", "Identificación de usuario");
+    }
+
+    /**
+     * [Prueba34] Intentar acceder sin estar autenticado a la opción de listado de conversaciones
+     * [REQUISITO OBLIGATORIO S5]. Se deberá volver al formulario de login.
+     */
+    @Test
+    @Order(34)
+    void PR34(){
+        /*
+        final String RestAssuredURL = "http://localhost:8081/api/v1.0/offers/chats/list";
+        Response response = RestAssured.get(RestAssuredURL);
+        Assertions.assertEquals(403, response.getStatusCode());
+
+         */
+        driver.navigate().to(URL+"/apiclient/client.html?w=chats");
+        PO_View.checkElementBy(driver, "id", "widget-login");
+    }
+
+    /**
+     * [Prueba35] Estando autenticado como usuario estándar intentar acceder a una opción disponible solo
+     * para usuarios administradores (Añadir menú de auditoria (visualizar logs)). Se deberá indicar un
+     * mensaje de acción prohibida.
+     */
+    @Test
+    @Order(35)
+    void PR35(){
+        PO_LoginView.login(driver, "user10@email.com", "user10", "Lista de ofertas propias");
+
+        driver.navigate().to(URL+"/users/logs");
+
+        PO_View.checkElementBy(driver, "text", "Solo el administrador puede acceder a lista de logs");
+        driver.navigate().to(URL+"/publications");
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba36] Estando autenticado como usuario administrador visualizar todos los logs generados en
+     * una serie de interacciones. Esta prueba deberá generar al menos dos interacciones de cada tipo y
+     * comprobar que el listado incluye los logs correspondientes.
+     */
+    @Test
+    @Order(36)
+    void PR36(){
+        // Generar interacciones
+        PO_HomeView.clickOption(driver, "login", "class", "btn btn-primary");
+
+//		String log1ExpectedType = "LOGIN-ERR";
+//		String log1ExpectedDescription = "user14@email.com";
+        PO_LoginView.fillLoginForm(driver, "user14@email.com", "aaaaa");
+
+//		String log2ExpectedType = "LOGIN-ERR";
+//		String log2ExpectedDescription = "user10@email.com";
+        PO_LoginView.fillLoginForm(driver, "user10@email.com", "bbbbb");
+
+//		String log3ExpectedType = "LOGIN-EX";
+//		String log3ExpectedDescription = "user14@email.com";
+        PO_LoginView.fillLoginForm(driver, "user14@email.com", "user14");
+
+//		String log4ExpectedType = "LOGIN-PET";
+//		String log4ExpectedMapping = "offer/add";
+//		String log4ExpectedHttpMethod = "GET";
+        PO_OwnOffersView.clickAddOfferOption(driver);
+
+//		String log5ExpectedType = "ALTA";
+//		String log5ExpectedMapping = "offer/add";
+//		String log5ExpectedHttpMethod = "POST";
+//		String log5ExpectedParam1 = "Oferta-user14-n11";
+//		String log5ExpectedParam2 = "testsBorrar";
+//		String log5ExpectedParam3 = "110";
+        PO_AddOfferView.fillFormAddOffer(driver, "Oferta-user14-n11", "testsBorrar", "110", false);
+
+//		String log6ExpectedType = "LOGOUT";
+//		String log6ExpectedDescription = "user14@email.com";
+        PO_LoginView.logout(driver);
+
+//		String log7ExpectedType = "LOGIN-PET";
+//		String log7ExpectedMapping = "signup";
+//		String log7ExpectedHttpMethod = "GET";
+        PO_HomeView.clickOption(driver, "signup", "class", "btn btn-primary");
+
+//		String log8ExpectedType = "ALTA";
+//		String log8ExpectedMapping = "signup";
+//		String log8ExpectedHttpMethod = "POST";
+//		String log8ExpectedParam1 = "user123@email.com";
+//		String log8ExpectedParam2 = "user123";
+//		String log8ExpectedParam3 = "testsBorrar";
+//		String log8ExpectedParam4 = "77777";
+//		String log8ExpectedParam5 = "77777";
+        PO_SignUpView.fillForm(driver, "user123@email.com", "testsBorrar", "testsBorrar", "2021-01-01", "77777", "77777");
+
+//		String log9ExpectedType = "LOGOUT";
+//		String log9ExpectedDescription = "user123@email.com";
+        PO_LoginView.logout(driver);
+
+//		String log10ExpectedType = "LOGIN-EX";
+//		String log10ExpectedDescription = "admin@email.com";
+        PO_LoginView.fillLoginForm(driver, "admin@email.com", "admin");
+
+        // Ver logs
+        PO_AdminView.clickLogsOption(driver);
+
+        List<WebElement> logs = PO_View.checkElementBy(driver, "free", "//tbody/tr");
+        Assertions.assertTrue(logs.size() >= 10);
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba34] Estando autenticado como usuario administrador, ir a visualización de logs, pulsar el
+     * botón/enlace borrar logs y comprobar que se eliminan los logs de la base de datos.
+     */
+    @Test
+    @Order(37)
+    void PR37(){
+        PO_LoginView.loginAsAdmin(driver);
+
+        PO_AdminView.clickLogsOption(driver);
+
+        PO_View.checkElementBy(driver, "id", "buttonDeleteLogs").get(0).click();
+
+        List<WebElement> logsBody = PO_View.checkElementBy(driver, "free", "//tbody");
+        List<WebElement> logs = logsBody.get(0).findElements(By.tagName("tr"));
+        // Log de que se borro todos los logs
+        Assertions.assertEquals(1, logs.size());
+
+        PO_LoginView.logout(driver);
+    }
+
+    /**
+     * [Prueba48] Inicio de sesión con datos válidos.
+     */
+    @Test
+    @Order(48)
+    void PR48(){
+        driver.navigate().to(URL+"/apiclient/client.html");
+        PO_LoginView.fillLoginForm(driver, "user08@email.com", "user08");
+        List<WebElement> elements = PO_OwnOffersView.checkElementBy(driver, "text", "Listado de ofertas");
+        Assertions.assertEquals(1, elements.size());
+    }
+
+    /**
+     * [Prueba49] Inicio de sesión con datos inválidos (email existente, pero contraseña incorrecta).
+     */
+    @Test
+    @Order(49)
+    void PR49(){
+        driver.navigate().to(URL+"/apiclient/client.html");
+        PO_LoginView.fillLoginForm(driver, "user08@email.com", "asdfasdf");
+        List<WebElement> elements = PO_OwnOffersView.checkElementBy(driver, "id", "div-errors");
+        Assertions.assertEquals(1, elements.size());
+    }
+
+    /**
+     * [Prueba50] Inicio de sesión con datos inválidos (campo email o contraseña vacíos).
+     */
+    @Test
+    @Order(50)
+    void PR50(){
+        driver.navigate().to(URL+"/apiclient/client.html");
+        PO_LoginView.fillLoginForm(driver, "user08@email.com", "        ");
+        List<WebElement> elements = PO_OwnOffersView.checkElementBy(driver, "id", "div-errors");
+        Assertions.assertEquals(1, elements.size());
+    }
+
+    /**
+     * [Prueba51] Mostrar el listado de ofertas disponibles y comprobar que se muestran todas las que existen,
+     * menos las del usuario identificado.
+     */
+    @Test
+    @Order(51)
+    void PR51(){
+        driver.navigate().to(URL+"/apiclient/client.html");
+        PO_LoginView.fillLoginForm(driver, "user08@email.com", "user08");
+        List<WebElement> elements = PO_OwnOffersView.checkElementBy(driver, "text", "Listado de ofertas");
+        Assertions.assertEquals(1, elements.size());
+        elements = PO_OwnOffersView.checkElementBy(driver, "free", "//tbody/tr");
+        Assertions.assertEquals(90, elements.size());
+    }
+
+    /**
+     * [Prueba52] Sobre listado de ofertas disponibles (a elección de desarrollador), enviar un mensaje a una
+     * oferta concreta. Se abriría dicha conversación por primera vez. Comprobar que el mensaje aparece
+     * en el listado de mensajes.
+     */
+    @Test
+    @Order(52)
+    void PR52(){
+        // hago login
+        driver.navigate().to(URL+"/apiclient/client.html");
+        PO_LoginView.fillLoginForm(driver, "user08@email.com", "user08");
+
+        // entro a una conversación
+        List<WebElement> elements = PO_OwnOffersView.checkElementBy(driver, "free",
+                "//tbody/tr/td/button[@id='Oferta-user02-n1-user02@email.com']");
+        Assertions.assertEquals(1, elements.size());
+        elements.get(0).click();
+
+        // mando un mensaje
+        WebElement email = driver.findElement(By.name("message"));
+        email.click();
+        email.clear();
+        email.sendKeys("PRUEBA");
+        By boton = By.className("btn");
+        driver.findElement(boton).click();
+
+        // compruebo que aparece
+        elements = PO_OwnOffersView.checkElementBy(driver, "free",
+                "//tbody/tr/td[contains(text(), 'PRUEBA')]");
+        Assertions.assertEquals(1, elements.size());
     }
 
     /* Ejemplos de pruebas de llamada a una API-REST */

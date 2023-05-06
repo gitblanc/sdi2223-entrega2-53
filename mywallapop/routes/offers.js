@@ -287,11 +287,12 @@ module.exports = function (app, offersRepository, usersRepository) {
      * Responde a la petición GET cuando quiere ver todas las ofertas en la vista de shop
      */
     app.get('/shop', function (req, res) {
-        let filter = {};
+        let filter = {seller: {$ne: req.session.user}};
         let options = {sort: {title: 1}};
 
         if (req.query.search != null && typeof (req.query.search) != "undefined" && req.query.search != "") {
-            filter = {"title": {$regex: new RegExp(".*" + req.query.search + ".*", "i")}};
+            filter = {seller: {$ne: req.session.user},
+                "title": {$regex: new RegExp(".*" + req.query.search + ".*", "i")}};
         }
 
         let page = parseInt(req.query.page); // Es String !!!
@@ -340,7 +341,7 @@ module.exports = function (app, offersRepository, usersRepository) {
             offerId: offerId
         }
 
-        checkCanAffordOffer(shop.user, offerId, function (canAffordIt) {
+        checkCanAffordOffer(req.session.userAmount, offerId, function (canAffordIt) {
             checkOwnOffer(shop.user, offerId, function (notOwnOffer) {
                 if (notOwnOffer && canAffordIt) {
                     offersRepository.buyOffer(shop, function (shopId) {
@@ -409,14 +410,14 @@ module.exports = function (app, offersRepository, usersRepository) {
         })
     }
 
-    function checkCanAffordOffer(user, offerId, callBackFunc) {
+    function checkCanAffordOffer(userAmount, offerId, callBackFunc) {
         let filterOffer = {"_id": offerId};
         let options = {}
 
         offersRepository.findOffer(filterOffer, options).then(offer => {
             if (offer === null) {
                 callBackFunc(false)
-            } else if (user.userAmount < offer.amount) {
+            } else if (userAmount < offer.price) {
                 callBackFunc(false)
             } else {
                 callBackFunc(true)

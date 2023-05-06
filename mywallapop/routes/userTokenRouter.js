@@ -1,6 +1,10 @@
 const jwt = require("jsonwebtoken");
 const express = require('express');
 const userTokenRouter = express.Router();
+
+/**
+ * Router para el token de sesión del usuario
+ */
 userTokenRouter.use(function (req, res, next) {
     console.log("userAuthorRouter");
     let token = req.headers['token'] || req.body.token || req.query.token;

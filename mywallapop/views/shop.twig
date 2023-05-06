@@ -23,6 +23,9 @@
         <h2>Lista de todas las ofertas </h2>
     </div>
 
+    <div class="row">
+        <h3>Sección destacada </h3>
+    </div>
     <table class="table table-hover" id="tableOffersH" >
         <thead>
         <tr>
@@ -37,7 +40,7 @@
         <tbody>
         {% for offer in offersH %}
             <tr>
-                <td>{{ offer.title }}</td>
+                <td class="title-highlight" >{{ offer.title }}</td>
                 <td>{{ offer.description }}</td>
                 <td>{{ offer.date }}</td>
                 <td>{{ offer.price }} €</td>
@@ -53,6 +56,9 @@
         </tbody>
     </table>
 
+    <div class="row">
+        <h3>Ofertas no destacadas </h3>
+    </div>
     <table class="table table-hover" id="tableOffers">
         <thead>
         <tr>

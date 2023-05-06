@@ -6,7 +6,8 @@ import org.openqa.selenium.WebElement;
 
 public class PO_AddOfferView extends PO_NavView {
 
-    public static void fillFormAddOffer(WebDriver driver, String titlep, String descriptionp, String amountp) {
+    public static void fillFormAddOffer(WebDriver driver, String titlep, String descriptionp, String amountp,
+                                        boolean highlightp) {
         WebElement title = driver.findElement(By.name("title"));
         title.click();
         title.clear();
@@ -19,6 +20,10 @@ public class PO_AddOfferView extends PO_NavView {
         amount.click();
         amount.clear();
         amount.sendKeys(amountp);
+        if (highlightp) {
+            WebElement highlight = driver.findElement(By.name("highlight"));
+            highlight.click();
+        }
 
         By boton = By.className("btn");
         driver.findElement(boton).click();

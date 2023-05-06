@@ -36,6 +36,16 @@ public class PO_NavView extends PO_View {
         clickOption(driver, "shop", "text", "Lista de todas las ofertas");
     }
 
+    public static void clickPurchasesOption(WebDriver driver) {
+        clickOption(driver, "purchases", "text", "Mis compras");
+    }
+
+    public static int getMyAmount(WebDriver driver) {
+        String myAmount = PO_OwnOffersView.checkElementBy(driver, "id", "myAmount").get(0).getText();
+        String myAmountOnlyNumber = myAmount.substring(0, myAmount.length()-2);
+        return Integer.parseInt(myAmountOnlyNumber);
+    }
+
     /**
      * Selecciona el enlace de idioma correspondiente al texto textLanguage
      * P á g i n a 15 | 27
@@ -55,5 +65,10 @@ public class PO_NavView extends PO_View {
         List<WebElement> Selectedlanguage = SeleniumUtils.waitLoadElementsBy(driver, "id", textLanguage,
                 getTimeout());
         Selectedlanguage.get(0).click();
+    }
+
+    public static void clickLogsOption(WebDriver driver) {
+        List<WebElement> elements = checkElementBy(driver, "id", "logs");
+        elements.get(0).click();
     }
 }
