@@ -77,7 +77,8 @@
                     "<tr>" +
                     "<td>" + conversations[i].user + "</td>" +
                     "<td>" + title + "</td>" +
-                    "<td><button onclick=\"openConversation('" + conversations[i]._id + "', '" + conversations[i].offer + "')\">" + "Chat" + "</button></td>"
+                    "<td><button id='" + 'chat-' + title + "'" +
+                        " onclick=\"openConversation('" + conversations[i]._id + "', '" + conversations[i].offer + "')\">" + "Chat" + "</button></td>"
                     + "</tr>"
                 );
             });

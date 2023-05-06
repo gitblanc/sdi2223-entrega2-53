@@ -20,13 +20,13 @@ import java.util.List;
 class Sdi2223Entrega2TestApplicationTests {
     // Windows
     static String PathFirefox = "C:\\Program Files\\Mozilla Firefox\\firefox.exe";
-    static String Geckodriver = "C:\\Users\\mines\\Desktop\\nodejs\\geckodriver-v0.30.0-win64.exe";
+    //static String Geckodriver = "C:\\Users\\mines\\Desktop\\nodejs\\geckodriver-v0.30.0-win64.exe";
     //static String Geckodriver = "C:\\Users\\uo277369\\Desktop\\geckodriver-v0.30.0-win64.exe";
     // MACOSX
     //static String PathFirefox = "/Applications/Firefox.app/Contents/MacOS/firefox-bin";
     //static String Geckodriver = "/Users/USUARIO/selenium/geckodriver-v0.30.0-macos";
 
-    //static String Geckodriver = "C:\\Users\\Diego\\Documents\\Universidad\\4º curso\\2º Semestre\\SDI\\PL-SDI-Sesión5-material\\geckodriver-v0.30.0-win64.exe";
+    static String Geckodriver = "C:\\Users\\Diego\\Documents\\Universidad\\4º curso\\2º Semestre\\SDI\\PL-SDI-Sesión5-material\\geckodriver-v0.30.0-win64.exe";
 
 
 //Común a Windows y a MACOSX
@@ -921,6 +921,66 @@ class Sdi2223Entrega2TestApplicationTests {
         // compruebo que aparece
         elements = PO_OwnOffersView.checkElementBy(driver, "free",
                 "//tbody/tr/td[contains(text(), 'PRUEBA')]");
+        Assertions.assertEquals(1, elements.size());
+    }
+
+    /**
+     * [Prueba53] Sobre el listado de conversaciones enviar un mensaje a una conversación ya abierta.
+     * Comprobar que el mensaje aparece en el listado de mensajes.
+     */
+    @Test
+    @Order(53)
+    void PR53(){
+        // hago login
+        driver.navigate().to(URL+"/apiclient/client.html");
+        PO_LoginView.fillLoginForm(driver, "user08@email.com", "user08");
+
+        // entro a listado de conversaciones
+        List<WebElement> elements = PO_OwnOffersView.checkElementBy(driver, "free",
+                "//a[@id='link-conversations']");
+        Assertions.assertEquals(1, elements.size());
+        elements.get(0).click();
+
+        // entro a la conversación
+        elements = PO_OwnOffersView.checkElementBy(driver, "free",
+                "//tbody/tr/td/button[@id='chat-Oferta-user02-n1']");
+        Assertions.assertEquals(1, elements.size());
+        elements.get(0).click();
+
+        // mando un mensaje
+        WebElement email = driver.findElement(By.name("message"));
+        email.click();
+        email.clear();
+        email.sendKeys("NUEVO");
+        By boton = By.className("btn");
+        driver.findElement(boton).click();
+
+        // compruebo que aparece
+        elements = PO_OwnOffersView.checkElementBy(driver, "free",
+                "//tbody/tr/td[contains(text(), 'NUEVO')]");
+        Assertions.assertEquals(1, elements.size());
+    }
+
+    /**
+     * [Prueba54] Mostrar el listado de conversaciones ya abiertas. Comprobar que el listado contiene la
+     * cantidad correcta de conversaciones.
+     */
+    @Test
+    @Order(54)
+    void PR54(){
+        // hago login
+        driver.navigate().to(URL+"/apiclient/client.html");
+        PO_LoginView.fillLoginForm(driver, "user08@email.com", "user08");
+
+        // entro a listado de conversaciones
+        List<WebElement> elements = PO_OwnOffersView.checkElementBy(driver, "free",
+                "//a[@id='link-conversations']");
+        Assertions.assertEquals(1, elements.size());
+        elements.get(0).click();
+
+        // cuento las conversaciones
+        elements = PO_OwnOffersView.checkElementBy(driver, "free",
+                "//tbody/tr");
         Assertions.assertEquals(1, elements.size());
     }
 
