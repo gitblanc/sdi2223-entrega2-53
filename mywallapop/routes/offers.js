@@ -319,7 +319,7 @@ module.exports = function (app, offersRepository, usersRepository) {
                 currentPage: page,
             }
             // Sacar destacadas
-            let filterH = {highlight: true};
+            let filterH = {highlight: true, seller: {$ne: req.session.user}};
             offersRepository.getOffers(filterH, {}).then(offersH => {
                 response.offersH = offersH;
                 appLogger.createNewLog("El usuario " + req.session.user + " ha accedido a la tienda", "PET");
@@ -444,7 +444,7 @@ module.exports = function (app, offersRepository, usersRepository) {
             } else {
                 offersRepository.getPurchases(filterBougthOffer, options).then(purchasedIds => {
                     if (purchasedIds === null || purchasedIds.length === 0) {
-                        callBackFunc(true)
+                        callBackFunc(false)
                     } else {
                         callBackFunc(true)
                     }
